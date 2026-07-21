@@ -20,7 +20,7 @@ class Settings:
         self.use_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "true").strip().lower() == "true"
         self.gcp_project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
         self.gcp_location = os.getenv("GOOGLE_CLOUD_LOCATION", "asia-northeast1")
-        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
         self.demo_mode = os.getenv("DEMO_MODE", "false").strip().lower() == "true"
         self.db_path = ROOT_DIR / "data" / "tokyu.db"
 

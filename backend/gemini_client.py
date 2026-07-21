@@ -11,6 +11,7 @@ than the old proxy + text-parsing round trip.
 
 from __future__ import annotations
 
+import json
 import time
 
 from google import genai
@@ -25,6 +26,11 @@ from backend.config import settings
 _RETRYABLE_CODES = (429, 500, 503, 504)
 _MAX_ATTEMPTS = 2
 _RETRY_BACKOFF_BASE_S = 1.5
+
+# If GEMINI_MODEL isn't resolvable (typo'd, renamed, not yet available in this
+# region/project), fall back to a known-good model rather than dropping
+# straight to rule-based text -- most requests should still get a live answer.
+_FALLBACK_MODEL = "gemini-2.5-flash"
 
 _client: genai.Client | None = None
 
@@ -44,24 +50,11 @@ def _get_client() -> genai.Client:
     return _client
 
 
-def call_gemini(system_prompt: str, user_content: str, *, timeout: float = 30.0) -> dict:
-    settings.require_gemini()
-
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        response_mime_type="application/json",
-        http_options=types.HttpOptions(timeout=int(timeout * 1000)),
-    )
-
+def _generate(model: str, contents, config) -> types.GenerateContentResponse:
     last_exc: Exception | None = None
     for attempt in range(_MAX_ATTEMPTS):
         try:
-            response = _get_client().models.generate_content(
-                model=settings.gemini_model,
-                contents=user_content,
-                config=config,
-            )
-            break
+            return _get_client().models.generate_content(model=model, contents=contents, config=config)
         except errors.APIError as exc:
             last_exc = exc
             code = getattr(exc, "code", None)
@@ -75,14 +68,39 @@ def call_gemini(system_prompt: str, user_content: str, *, timeout: float = 30.0)
                 time.sleep(_RETRY_BACKOFF_BASE_S * (attempt + 1))
                 continue
             raise GeminiAPIError(f"Could not reach Gemini/Vertex AI: {exc}") from exc
+    raise GeminiAPIError(f"Gemini call failed after {_MAX_ATTEMPTS} attempts: {last_exc}")
+
+
+def _models_to_try() -> list[str]:
+    models = [settings.gemini_model]
+    if settings.gemini_model != _FALLBACK_MODEL:
+        models.append(_FALLBACK_MODEL)
+    return models
+
+
+def call_gemini(system_prompt: str, user_content: str, *, timeout: float = 30.0) -> dict:
+    settings.require_gemini()
+
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        response_mime_type="application/json",
+        http_options=types.HttpOptions(timeout=int(timeout * 1000)),
+    )
+
+    last_exc: Exception | None = None
+    for model in _models_to_try():
+        try:
+            response = _generate(model, user_content, config)
+            break
+        except GeminiAPIError as exc:
+            last_exc = exc
+            continue
     else:
-        raise GeminiAPIError(f"Gemini call failed after {_MAX_ATTEMPTS} attempts: {last_exc}")
+        raise last_exc
 
     text = response.text
     if not text:
         raise GeminiAPIError("Gemini returned an empty response")
-
-    import json
 
     try:
         return json.loads(text)
@@ -90,30 +108,36 @@ def call_gemini(system_prompt: str, user_content: str, *, timeout: float = 30.0)
         raise GeminiAPIError(f"Gemini response was not valid JSON: {text[:500]}") from exc
 
 
-def check_connection() -> tuple[bool, str]:
+def check_connection() -> tuple[bool, str, str]:
     """Minimal real call to verify Vertex AI/Gemini is actually reachable.
 
     Deliberately doesn't use settings.require_gemini() -- that no-ops in demo
     mode, but this check is meant to test real connectivity regardless of
-    DEMO_MODE.
+    DEMO_MODE. Tries the configured model first, then the fallback model, so
+    the badge reflects whichever one will actually answer requests.
+
+    Returns (connected, message, model) -- model is whichever one actually
+    responded (empty string if none did).
     """
     if not settings.gcp_project:
-        return False, "GOOGLE_CLOUD_PROJECT not set in .env"
+        return False, "GOOGLE_CLOUD_PROJECT not set in .env", settings.gemini_model
 
-    try:
-        response = _get_client().models.generate_content(
-            model=settings.gemini_model,
-            contents="ping",
-            config=types.GenerateContentConfig(
-                max_output_tokens=5,
-                http_options=types.HttpOptions(timeout=15000),
-            ),
-        )
-    except errors.APIError as exc:
-        return False, f"Vertex AI error ({getattr(exc, 'code', '?')}): {exc}"
-    except Exception as exc:
-        return False, f"Could not reach Vertex AI: {exc}"
+    config = types.GenerateContentConfig(max_output_tokens=5, http_options=types.HttpOptions(timeout=15000))
 
-    if not response:
-        return False, "Vertex AI returned an empty response"
-    return True, f"Connected (model={settings.gemini_model})"
+    last_message = ""
+    for model in _models_to_try():
+        try:
+            response = _get_client().models.generate_content(model=model, contents="ping", config=config)
+        except errors.APIError as exc:
+            last_message = f"Vertex AI error ({getattr(exc, 'code', '?')}): {exc}"
+            continue
+        except Exception as exc:
+            last_message = f"Could not reach Vertex AI: {exc}"
+            continue
+
+        if not response:
+            last_message = "Vertex AI returned an empty response"
+            continue
+        return True, f"Connected (model={model})", model
+
+    return False, last_message, settings.gemini_model

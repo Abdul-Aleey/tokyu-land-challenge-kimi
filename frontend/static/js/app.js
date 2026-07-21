@@ -1543,7 +1543,7 @@ function renderModelStatus() {
   }
   if (s.connected) {
     dot.className = "status-dot connected";
-    text.textContent = t("modelConnected");
+    text.textContent = s.model ? `${t("modelConnected")} (${s.model})` : t("modelConnected");
   } else if (s.demo_mode) {
     dot.className = "status-dot fallback";
     text.textContent = t("modelDemoMode");

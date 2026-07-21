@@ -41,7 +41,7 @@ steps:
       - '--timeout'
       - '60'
       - '--set-env-vars'
-      - 'GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=asia-northeast1,GEMINI_MODEL=gemini-2.5-flash,DEMO_MODE=false,GCS_BUCKET_NAME=tokyu,GCS_DB_OBJECT_NAME=tokyu.db'
+      - 'GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=asia-northeast1,GEMINI_MODEL=gemini-3.5-flash,DEMO_MODE=false,GCS_BUCKET_NAME=tokyu,GCS_DB_OBJECT_NAME=tokyu.db'
 
 images:
   - 'gcr.io/$PROJECT_ID/tokyu-member-console:$COMMIT_SHA'

@@ -80,5 +80,5 @@ def segment_insights(lang: str = "en"):
 def ai_status():
     if settings.demo_mode:
         return {"connected": False, "demo_mode": True, "model": settings.gemini_model, "message": "Demo mode enabled -- always using fallback text"}
-    ok, message = check_connection()
-    return {"connected": ok, "demo_mode": False, "model": settings.gemini_model, "message": message}
+    ok, message, model = check_connection()
+    return {"connected": ok, "demo_mode": False, "model": model, "message": message}
