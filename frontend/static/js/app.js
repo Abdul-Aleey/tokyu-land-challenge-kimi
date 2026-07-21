@@ -1,0 +1,1659 @@
+/* Sakura Deeptech Shibuya — Member Console frontend controller.
+   Vanilla JS, no build step. Talks to the FastAPI backend under /api. */
+
+const I18N = {
+  en: {
+    brandTitle: "Sakura Deeptech Shibuya",
+    brandSubtitle: "Member Status Console",
+    kpiTotal: "Total Members",
+    kpiActive: "Active Contracts",
+    kpiRenewals: "Renewals Due (30d)",
+    kpiOverdue: "Late Payments",
+    kpiMissing: "Invoices Not Sent",
+    insightLoading: "Reading today's portfolio…",
+    insightUnavailable: "AI insight unavailable right now — showing computed stats instead.",
+    radarTitle: "AI Risk Radar",
+    radarSub: "Companies needing attention first",
+    radarEmpty: "No companies currently at risk — portfolio is healthy.",
+    searchPlaceholder: "Search company, industry, contact…",
+    askAi: "Ask AI",
+    askAiBadge: "AI-Powered Search",
+    resetFilters: "Reset",
+    exportCsv: "Export CSV",
+    rowsPerPage: "Rows per page", pagerPrev: "Prev", pagerNext: "Next",
+    askAiPlaceholder: "e.g. who has a late payment and renews this month?",
+    askAiSubmit: "Ask",
+    colCompany: "Company", colIndustry: "Industry", colContract: "Contract",
+    colRenewal: "Renewal Date", colPayment: "Payment", colInvoice: "Invoice Request", colRisk: "Risk",
+    noResults: "No member companies match your search.",
+    noResultsTypo: "No exact match for that search.",
+    didYouMean: "Did you mean:",
+    analyticsTitle: "Portfolio Analytics",
+    analyticsSub: "Breakdown across all member companies",
+    chartContract: "Contract Status", chartPayment: "Payment Status",
+    chartInvoice: "Invoice Requests", chartRenewals: "Upcoming Renewals by Month",
+    footerNote: "Built for the Tokyo Land / Tokyu Fudosan Enterprise Challenge — local demo only.",
+    filterAllContract: "All contract statuses",
+    filterAllPayment: "All payment statuses",
+    filterAllInvoice: "All invoice statuses",
+    statusActive: "Active", statusPendingRenewal: "Pending Renewal", statusExpired: "Expired", statusCancelled: "Cancelled",
+    statusPaid: "Paid", statusNotPaid: "Not Paid", statusLatePayment: "Late Payment",
+    statusSent: "Sent", statusNotSent: "Not Sent",
+    riskCritical: "Critical", riskHigh: "High", riskMedium: "Medium", riskLow: "Low", riskNone: "—",
+    drawerContact: "Contact", drawerPlan: "Plan", drawerFee: "Monthly Fee",
+    drawerStarted: "Member Since", drawerLastPayment: "Last Payment", drawerNotes: "Ops Notes",
+    drawerEmail: "Email", drawerPhone: "Phone", drawerInvoiceSent: "Invoice Sent",
+    aiCallScript: "Suggested call script", aiRecommended: "Recommended action",
+    copy: "Copy", copied: "Copied!",
+    statusEditorTitle: "Update status", save: "Save changes", saved: "Status updated",
+    timelineTitle: "Activity timeline",
+    modifyRecord: "Modify record", deleteRecord: "Delete record", deleted: "Record deleted",
+    addRecord: "Add Record", recordSaved: "Record saved",
+    formName: "Company name", formNameKana: "Japanese reading (name_kana)", formIndustry: "Industry",
+    formPlan: "Membership plan", formContactPerson: "Contact person", formContactEmail: "Contact email",
+    formContactPhone: "Contact phone", formContractStatus: "Contract status",
+    formContractStart: "Contract start date", formRenewalDate: "Renewal date",
+    formPaymentStatus: "Payment status", formInvoiceStatus: "Invoice request status",
+    formFee: "Monthly fee (JPY)", formNotes: "Ops notes", formCancel: "Cancel", formSave: "Save record",
+    loadingBrief: "Generating call script…",
+    aiSourceAi: "AI", aiSourceFallback: "RULE-BASED",
+    eventStart: "Membership agreement signed and onboarded",
+    eventRenewed: "Contract renewed for another term",
+    eventPayment: "Monthly invoice paid in full",
+    eventInvoiceSent: "Invoice issued to member company",
+    eventInvoiceRequested: "Member company requested a new invoice",
+    eventReminder: "Renewal reminder sent to primary contact",
+    eventOverdueNotice: "Late payment notice sent",
+    eventStatusUpdate: "Status manually updated by operations staff",
+    legendDueSoon: "Due this month",
+    legendDueMid: "Due in 2–3 months",
+    legendDueLater: "Later",
+    fetchError: "Could not reach the server. Is the backend running?",
+    briefLoadingSteps: [
+      "Reviewing contract & renewal details…",
+      "Checking payment and invoice status…",
+      "Drafting a call script for staff…",
+      "Almost ready…",
+    ],
+    insightLoadingSteps: [
+      "Scanning all member companies…",
+      "Identifying renewal and payment risks…",
+      "Prioritizing today's actions…",
+      "Finalizing the portfolio insight…",
+    ],
+    askAiLoadingSteps: [
+      "Interpreting your question…",
+      "Matching it to contract, payment & invoice filters…",
+      "Almost there…",
+    ],
+    segmentTitle: "Segmentation",
+    segmentSub: "Risk by membership plan and industry",
+    byPlanTitle: "By Membership Plan",
+    byIndustryTitle: "By Industry",
+    colIndustryName: "Industry",
+    colTotalShort: "Total",
+    colAtRiskShort: "At Risk",
+    colOverdueShort: "Late",
+    colMissingShort: "Not Sent",
+    atRiskLabel: "At risk",
+    activeLabel: "Active",
+    segmentInsightLoadingSteps: [
+      "Grouping companies by plan and industry…",
+      "Finding the biggest gaps…",
+      "Finalizing the insight…",
+    ],
+    modelChecking: "Checking model…",
+    modelConnected: "Model Connected",
+    modelFallback: "Fallback Mode",
+    modelDemoMode: "Demo Mode",
+  },
+  ja: {
+    brandTitle: "サクラ ディープテック 渋谷",
+    brandSubtitle: "会員ステータス コンソール",
+    kpiTotal: "会員企業数",
+    kpiActive: "有効契約数",
+    kpiRenewals: "30日以内の更新",
+    kpiOverdue: "支払い遅延",
+    kpiMissing: "請求書未送付",
+    insightLoading: "本日のポートフォリオを確認中…",
+    insightUnavailable: "AIインサイトは現在利用できません。計算済みの統計を表示しています。",
+    radarTitle: "AIリスクレーダー",
+    radarSub: "優先的に対応が必要な企業",
+    radarEmpty: "現在リスクのある企業はありません。ポートフォリオは健全です。",
+    searchPlaceholder: "会社名・業種・担当者で検索…",
+    askAi: "AIに質問",
+    askAiBadge: "AI検索",
+    resetFilters: "リセット",
+    exportCsv: "CSV出力",
+    rowsPerPage: "表示件数", pagerPrev: "前へ", pagerNext: "次へ",
+    askAiPlaceholder: "例：支払いが遅延していて今月更新の会社は？",
+    askAiSubmit: "質問する",
+    colCompany: "会社名", colIndustry: "業種", colContract: "契約状況",
+    colRenewal: "更新日", colPayment: "支払状況", colInvoice: "請求書対応", colRisk: "リスク",
+    noResults: "該当する会員企業がありません。",
+    noResultsTypo: "完全に一致する結果は見つかりませんでした。",
+    didYouMean: "もしかして:",
+    analyticsTitle: "ポートフォリオ分析",
+    analyticsSub: "全会員企業の内訳",
+    chartContract: "契約状況", chartPayment: "支払状況",
+    chartInvoice: "請求書対応状況", chartRenewals: "月別 今後の更新予定",
+    footerNote: "Tokyo Land / Tokyu Fudosan Enterprise Challenge 向けローカルデモです。",
+    filterAllContract: "すべての契約状況",
+    filterAllPayment: "すべての支払状況",
+    filterAllInvoice: "すべての請求書対応状況",
+    statusActive: "有効", statusPendingRenewal: "更新手続き中", statusExpired: "契約終了", statusCancelled: "解約済み",
+    statusPaid: "支払済み", statusNotPaid: "未払い", statusLatePayment: "支払遅延",
+    statusSent: "送付済み", statusNotSent: "未送付",
+    riskCritical: "重大", riskHigh: "高", riskMedium: "中", riskLow: "低", riskNone: "—",
+    drawerContact: "担当者", drawerPlan: "プラン", drawerFee: "月額料金",
+    drawerStarted: "契約開始日", drawerLastPayment: "直近の支払い", drawerNotes: "運営メモ",
+    drawerEmail: "メールアドレス", drawerPhone: "電話番号", drawerInvoiceSent: "請求書送付日",
+    aiCallScript: "応答スクリプト案", aiRecommended: "推奨アクション",
+    copy: "コピー", copied: "コピーしました",
+    statusEditorTitle: "ステータス更新", save: "保存する", saved: "ステータスを更新しました",
+    timelineTitle: "アクティビティ履歴",
+    modifyRecord: "編集する", deleteRecord: "削除する", deleted: "レコードを削除しました",
+    addRecord: "新規登録", recordSaved: "レコードを保存しました",
+    formName: "会社名", formNameKana: "ふりがな（name_kana）", formIndustry: "業種",
+    formPlan: "プラン", formContactPerson: "担当者名", formContactEmail: "担当者メール",
+    formContactPhone: "担当者電話番号", formContractStatus: "契約ステータス",
+    formContractStart: "契約開始日", formRenewalDate: "更新日",
+    formPaymentStatus: "支払ステータス", formInvoiceStatus: "請求書ステータス",
+    formFee: "月額料金（円）", formNotes: "運営メモ", formCancel: "キャンセル", formSave: "保存する",
+    loadingBrief: "応答スクリプトを生成中…",
+    aiSourceAi: "AI", aiSourceFallback: "ルールベース",
+    eventStart: "入会契約締結・オンボーディング完了",
+    eventRenewed: "契約が更新されました",
+    eventPayment: "月額請求のお支払いが完了しました",
+    eventInvoiceSent: "会員企業へ請求書を発行しました",
+    eventInvoiceRequested: "会員企業より請求書の発行依頼がありました",
+    eventReminder: "担当者へ更新リマインダーを送付しました",
+    eventOverdueNotice: "支払い遅延の通知を送付しました",
+    eventStatusUpdate: "運営スタッフがステータスを手動更新しました",
+    legendDueSoon: "今月中",
+    legendDueMid: "2〜3ヶ月以内",
+    legendDueLater: "それ以降",
+    fetchError: "サーバーに接続できません。バックエンドが起動しているか確認してください。",
+    briefLoadingSteps: [
+      "契約内容と更新日を確認中…",
+      "支払い・請求書の状況を確認中…",
+      "応答スクリプトを作成中…",
+      "もうすぐ完了します…",
+    ],
+    insightLoadingSteps: [
+      "全会員企業をスキャン中…",
+      "更新・支払いのリスクを確認中…",
+      "本日の優先事項を整理中…",
+      "インサイトを作成中…",
+    ],
+    askAiLoadingSteps: [
+      "ご質問を解析中…",
+      "契約・支払い・請求条件に変換中…",
+      "もうすぐ完了します…",
+    ],
+    segmentTitle: "セグメント分析",
+    segmentSub: "プラン・業種別のリスク",
+    byPlanTitle: "プラン別",
+    byIndustryTitle: "業種別",
+    colIndustryName: "業種",
+    colTotalShort: "件数",
+    colAtRiskShort: "要注意",
+    colOverdueShort: "支払遅延",
+    colMissingShort: "請求書未送付",
+    atRiskLabel: "要注意",
+    activeLabel: "有効",
+    segmentInsightLoadingSteps: [
+      "プラン・業種ごとに集計中…",
+      "主な課題を抽出中…",
+      "インサイトを作成中…",
+    ],
+    modelChecking: "モデル確認中…",
+    modelConnected: "モデル接続中",
+    modelFallback: "フォールバックモード",
+    modelDemoMode: "デモモード",
+  },
+};
+
+const HELP_GUIDE = {
+  en: {
+    title: "How to use this dashboard",
+    sections: [
+      {
+        h: "Search & filter",
+        p: [],
+        items: [
+          "Type in the search box to match company name, industry, or contact person.",
+          "Use the contract / payment / invoice dropdowns to narrow the table to one status.",
+          "A \"Reset\" button appears whenever a search, filter, or Ask AI question is active — one click clears everything.",
+        ],
+      },
+      {
+        h: "Ask AI",
+        p: ["Type a question in plain language and click Ask. It answers directly (in whichever language you're using) and, when relevant, also filters the table to the companies it's talking about — for example \"which company is at highest risk?\" or \"how many companies have a late payment?\"."],
+        items: [],
+      },
+      {
+        h: "AI Risk Radar",
+        p: ["A scrollable strip of the companies needing attention first, ranked by risk, so you see priorities before you even search."],
+        items: [],
+      },
+      {
+        h: "Company details",
+        p: ["Click any row to open its full details, including contact email, phone, invoice-sent date, and payment date — these only appear here, not in the list, and payment date only shows once the company has actually been paid."],
+        items: [],
+      },
+      {
+        h: "Payment & invoice rules",
+        p: [],
+        items: [
+          "A company can never be marked Paid until its invoice has been marked Sent.",
+          "\"Late Payment\" appears automatically once a company is unpaid past its renewal date — it's never set by hand.",
+          "Risk level follows payment timing: Critical (unpaid, past renewal date), High (unpaid, due today), Low (unpaid, due within 3 days), otherwise no risk.",
+        ],
+      },
+      {
+        h: "Update, add, modify, delete",
+        p: [],
+        items: [
+          "Inside a company's details, use \"Update status\" for a quick contract/payment/invoice change.",
+          "\"Modify record\" opens the full edit form for every field on that company.",
+          "\"+ Add Record\" (above the table) creates a brand-new company.",
+          "\"Delete record\" permanently removes a company and its activity history.",
+          "Every change is logged to that company's activity timeline.",
+        ],
+      },
+      {
+        h: "Table & pagination",
+        p: ["Choose 10, 25, or 50 rows per page and use Prev/Next to page through the list. \"Export CSV\" downloads exactly what's currently shown (search/filters applied)."],
+        items: [],
+      },
+      {
+        h: "Analytics & segmentation",
+        p: ["Below the table, Portfolio Analytics breaks down contract/payment/invoice status and upcoming renewals by month; Segmentation shows the same risk picture grouped by membership plan and industry."],
+        items: [],
+      },
+      {
+        h: "Language, theme & AI status",
+        p: ["Toggle EN/日本語 and light/dark from the top bar. The badge next to the clock shows whether AI answers are live (\"Model Connected\") or using the rule-based fallback (\"Fallback Mode\" / \"Demo Mode\")."],
+        items: [],
+      },
+    ],
+  },
+  ja: {
+    title: "このダッシュボードの使い方",
+    sections: [
+      {
+        h: "検索・フィルター",
+        p: [],
+        items: [
+          "検索欄に入力すると、会社名・業種・担当者名で絞り込めます。",
+          "契約・支払・請求書のドロップダウンで、特定のステータスに絞り込めます。",
+          "検索やフィルター、AI検索が使われているときは「リセット」ボタンが表示され、ワンクリックで全て解除できます。",
+        ],
+      },
+      {
+        h: "AI検索",
+        p: ["自然な文章で質問を入力して「質問する」を押すと、その場で直接回答します（表示言語で回答）。関連する会社があれば、表の絞り込みも自動で行われます。例：「最もリスクが高い会社は？」「支払いが遅延している会社は何社？」など。"],
+        items: [],
+      },
+      {
+        h: "AIリスクレーダー",
+        p: ["優先的に対応が必要な企業をリスク順に並べた一覧です。検索する前に、まず確認すべき企業がひと目でわかります。"],
+        items: [],
+      },
+      {
+        h: "会社詳細",
+        p: ["行をクリックすると詳細が開き、担当者メール・電話番号・請求書送付日・支払日が表示されます。これらは詳細画面でのみ表示され、支払日は実際に支払いが完了している場合のみ表示されます。"],
+        items: [],
+      },
+      {
+        h: "支払い・請求書のルール",
+        p: [],
+        items: [
+          "請求書が「送付済み」になるまで、支払いステータスを「支払済み」にすることはできません。",
+          "「支払遅延」は、未払いのまま更新日を過ぎると自動的に表示されます（手動設定はしません）。",
+          "リスクレベルは支払いのタイミングで決まります：重大（未払いで更新日超過）、高（未払いで本日が期日）、低（未払いで期日まで3日以内）、それ以外はリスクなし。",
+        ],
+      },
+      {
+        h: "更新・新規登録・編集・削除",
+        p: [],
+        items: [
+          "詳細画面の「ステータス更新」で、契約・支払・請求書のステータスをすばやく変更できます。",
+          "「編集する」では、その会社のすべての項目を編集できます。",
+          "表の上にある「＋新規登録」で新しい会社を登録できます。",
+          "「削除する」で会社とその活動履歴を完全に削除します。",
+          "変更内容はすべてその会社のアクティビティ履歴に記録されます。",
+        ],
+      },
+      {
+        h: "表とページ表示",
+        p: ["表示件数は10・25・50件から選べ、「前へ」「次へ」でページを送れます。「CSV出力」は現在表示中の内容（検索・フィルター適用後）をそのまま出力します。"],
+        items: [],
+      },
+      {
+        h: "分析・セグメント",
+        p: ["表の下にある「ポートフォリオ分析」では契約・支払・請求書ステータスの内訳と月別更新予定を、「セグメント分析」ではプラン別・業種別の同じリスク傾向を確認できます。"],
+        items: [],
+      },
+      {
+        h: "言語・テーマ・AI接続状況",
+        p: ["上部バーでEN/日本語と、ライト/ダークテーマを切り替えられます。時計の隣のバッジは、AIの回答がリアルタイム（「モデル接続中」）かルールベースのフォールバック（「フォールバックモード」「デモモード」）かを示します。"],
+        items: [],
+      },
+    ],
+  },
+};
+
+const CONTRACT_KEYS = { "Active": "statusActive", "Pending Renewal": "statusPendingRenewal", "Expired": "statusExpired", "Cancelled": "statusCancelled" };
+const PAYMENT_KEYS = { "Paid": "statusPaid", "Not Paid": "statusNotPaid", "Late Payment": "statusLatePayment" };
+const INVOICE_KEYS = { "Sent": "statusSent", "Not Sent": "statusNotSent" };
+const RISK_KEYS = { "Critical": "riskCritical", "High": "riskHigh", "Medium": "riskMedium", "Low": "riskLow", "None": "riskNone" };
+
+const CONTRACT_BADGE = { "Active": "good", "Pending Renewal": "warning", "Expired": "serious", "Cancelled": "neutral" };
+const PAYMENT_BADGE = { "Paid": "good", "Not Paid": "warning", "Late Payment": "critical" };
+const INVOICE_BADGE = { "Sent": "good", "Not Sent": "serious" };
+const RISK_BADGE = { "Critical": "critical", "High": "serious", "Medium": "warning", "Low": "good", "None": "neutral" };
+
+// Payment/invoice selects in the Add/Modify form only ever offer the raw
+// ground-truth values staff can set -- "Late Payment" is always computed.
+const PAYMENT_WRITE_KEYS = { "Paid": "statusPaid", "Not Paid": "statusNotPaid" };
+const INVOICE_WRITE_KEYS = { "Sent": "statusSent", "Not Sent": "statusNotSent" };
+
+const EVENT_KEYS = {
+  start: "eventStart", renewed: "eventRenewed", payment: "eventPayment",
+  invoice_sent: "eventInvoiceSent", invoice_requested: "eventInvoiceRequested",
+  reminder: "eventReminder", overdue_notice: "eventOverdueNotice", status_update: "eventStatusUpdate",
+};
+
+const state = {
+  lang: localStorage.getItem("sds_lang") || "en",
+  theme: localStorage.getItem("sds_theme") || "dark",
+  filters: { search: "", contract_status: "", payment_status: "", invoice_status: "" },
+  pagination: { page: 1, pageSize: 25 },
+  summary: null,
+  renewalsByMonth: null,
+  insightCache: {},
+  segmentInsightCache: {},
+  segmentation: null,
+  companies: [],
+  drawerCompanyId: null,
+  modelStatus: null,
+};
+
+function t(key) {
+  return (I18N[state.lang] && I18N[state.lang][key]) || I18N.en[key] || key;
+}
+
+function tArr(key) {
+  return (I18N[state.lang] && I18N[state.lang][key]) || I18N.en[key] || [];
+}
+
+/* ---------------------------- animated AI loader ---------------------------- */
+/* Cycles through a list of status sentences with a spinner so an AI call
+   always shows visible progress instead of a static "loading…" label. */
+function createLoader(messagesKey) {
+  const messages = tArr(messagesKey);
+  const wrap = document.createElement("div");
+  wrap.className = "loading-row";
+  const spinner = document.createElement("span");
+  spinner.className = "loader-spin";
+  const text = document.createElement("span");
+  text.className = "loading-text";
+  text.textContent = messages[0] || "";
+  wrap.appendChild(spinner);
+  wrap.appendChild(text);
+
+  let idx = 0;
+  const interval = setInterval(() => {
+    idx = (idx + 1) % messages.length;
+    text.style.opacity = "0";
+    setTimeout(() => {
+      text.textContent = messages[idx];
+      text.style.opacity = "1";
+    }, 250);
+  }, 2200);
+
+  wrap.stopLoader = () => clearInterval(interval);
+  return wrap;
+}
+
+const activeLoaders = { brief: null, insight: null, askAi: null, segment: null };
+function stopLoader(name) {
+  if (activeLoaders[name]) {
+    activeLoaders[name].stopLoader();
+    activeLoaders[name] = null;
+  }
+}
+
+/* ---------------------------- fetch helper ---------------------------- */
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    headers: { "Content-Type": "application/json" },
+    ...opts,
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.json()).detail || ""; } catch (e) { /* no JSON body */ }
+    const err = new Error(detail || `API ${path} -> ${res.status}`);
+    err.detail = detail;
+    err.status = res.status;
+    throw err;
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+/* ---------------------------- toast ---------------------------- */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2800);
+}
+
+/* ---------------------------- formatting ---------------------------- */
+const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS_EN_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function formatDate(iso, lang) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (lang === "ja") return `${y}年${m}月${d}日`;
+  return `${MONTHS_EN[m - 1]} ${d}, ${y}`;
+}
+
+function monthLabel(yyyymm, lang) {
+  const [y, m] = yyyymm.split("-").map(Number);
+  if (lang === "ja") return `${m}月`;
+  return MONTHS_EN_SHORT[m - 1];
+}
+
+function translateReason(reason, lang) {
+  if (lang !== "ja") return reason;
+  const table = {
+    "Payment is late": "支払いが遅延しています",
+    "Payment due today, not yet received": "本日が支払期日ですが、まだ入金が確認できていません",
+  };
+  if (table[reason]) return table[reason];
+  let m = reason.match(/Renewal due in (\d+) day\(s\)/);
+  if (m) return `更新まで残り${m[1]}日、支払未確認`;
+  return reason;
+}
+
+function statusLabel(keyMap, value) {
+  return t(keyMap[value] || value);
+}
+
+/* ---------------------------- i18n DOM application ---------------------------- */
+function applyStaticI18n() {
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll("[data-i18n]").forEach((elm) => {
+    elm.textContent = t(elm.getAttribute("data-i18n"));
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((elm) => {
+    elm.setAttribute("placeholder", t(elm.getAttribute("data-i18n-placeholder")));
+  });
+  document.getElementById("langToggle").setAttribute("data-active", state.lang);
+  populateFilterSelects();
+}
+
+function populateFilterSelects() {
+  const build = (selectEl, allKey, keyMap) => {
+    const prev = selectEl.value;
+    selectEl.innerHTML = "";
+    const allOpt = document.createElement("option");
+    allOpt.value = "";
+    allOpt.textContent = t(allKey);
+    selectEl.appendChild(allOpt);
+    Object.keys(keyMap).forEach((val) => {
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = t(keyMap[val]);
+      selectEl.appendChild(opt);
+    });
+    selectEl.value = prev;
+  };
+  build(document.getElementById("filterContract"), "filterAllContract", CONTRACT_KEYS);
+  build(document.getElementById("filterPayment"), "filterAllPayment", PAYMENT_KEYS);
+  build(document.getElementById("filterInvoice"), "filterAllInvoice", INVOICE_KEYS);
+
+  const buildPlain = (selectEl, keyMap) => {
+    const prev = selectEl.value;
+    selectEl.innerHTML = "";
+    Object.keys(keyMap).forEach((val) => {
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = t(keyMap[val]);
+      selectEl.appendChild(opt);
+    });
+    if (prev) selectEl.value = prev;
+  };
+  buildPlain(document.getElementById("fContractStatus"), CONTRACT_KEYS);
+  buildPlain(document.getElementById("fPaymentStatus"), PAYMENT_WRITE_KEYS);
+  buildPlain(document.getElementById("fInvoiceStatus"), INVOICE_WRITE_KEYS);
+}
+
+/* ---------------------------- badges ---------------------------- */
+function badge(labelText, level) {
+  const span = document.createElement("span");
+  span.className = `badge badge-${level}`;
+  const dot = document.createElement("span");
+  dot.className = "dot";
+  span.appendChild(dot);
+  const txt = document.createElement("span");
+  txt.textContent = labelText;
+  span.appendChild(txt);
+  return span;
+}
+
+/* ---------------------------- KPIs ---------------------------- */
+function renderKPIs(summary) {
+  const map = {
+    kpiTotal: summary.total_companies,
+    kpiActive: summary.active_contracts,
+    kpiRenewals: summary.renewals_due_30d,
+    kpiOverdue: summary.payments_late,
+    kpiMissing: summary.invoices_not_sent,
+  };
+  for (const id in map) {
+    const elm = document.getElementById(id);
+    elm.textContent = map[id];
+    elm.classList.remove("animate");
+    void elm.offsetWidth;
+    elm.classList.add("animate");
+  }
+}
+
+/* ---------------------------- radar ---------------------------- */
+function renderRadar(items) {
+  const track = document.getElementById("radarTrack");
+  track.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "radar-empty";
+    empty.textContent = t("radarEmpty");
+    track.appendChild(empty);
+    return;
+  }
+  items.forEach((c) => {
+    const card = document.createElement("div");
+    card.className = "radar-card";
+    card.addEventListener("click", () => openDrawer(c.id));
+
+    const level = document.createElement("span");
+    level.className = `radar-level level-${RISK_BADGE[c.risk.level] || "neutral"}`;
+    level.textContent = statusLabel(RISK_KEYS, c.risk.level);
+    card.appendChild(level);
+
+    const name = document.createElement("div");
+    name.className = "radar-name";
+    name.textContent = c.name;
+    card.appendChild(name);
+
+    const industry = document.createElement("div");
+    industry.className = "radar-industry";
+    industry.textContent = c.industry;
+    card.appendChild(industry);
+
+    c.risk.reasons.slice(0, 2).forEach((r) => {
+      const reason = document.createElement("div");
+      reason.className = "radar-reason";
+      reason.style.color = `var(--status-${RISK_BADGE[c.risk.level] === "critical" ? "critical" : "warning"})`;
+      reason.textContent = translateReason(r, state.lang);
+      card.appendChild(reason);
+    });
+
+    track.appendChild(card);
+  });
+}
+
+/* ---------------------------- table ---------------------------- */
+function renderTable(companies, totalCount) {
+  const tbody = document.getElementById("companyTableBody");
+  tbody.innerHTML = "";
+  const empty = document.getElementById("tableEmpty");
+  const countEl = document.getElementById("tableCount");
+
+  if (!companies.length) {
+    empty.classList.remove("hidden");
+    document.getElementById("tableEmptyText").textContent = t("noResults");
+    const suggestRow = document.getElementById("suggestRow");
+    suggestRow.classList.add("hidden");
+    suggestRow.innerHTML = "";
+  } else {
+    empty.classList.add("hidden");
+  }
+
+  companies.forEach((c) => {
+    const tr = document.createElement("tr");
+    tr.addEventListener("click", () => openDrawer(c.id));
+
+    const tdName = document.createElement("td");
+    tdName.className = "cell-name";
+    tdName.textContent = c.name;
+    const sub = document.createElement("div");
+    sub.className = "cell-sub";
+    sub.textContent = c.membership_plan;
+    tdName.appendChild(sub);
+    tr.appendChild(tdName);
+
+    const tdIndustry = document.createElement("td");
+    tdIndustry.textContent = c.industry;
+    tr.appendChild(tdIndustry);
+
+    const tdContract = document.createElement("td");
+    tdContract.appendChild(badge(statusLabel(CONTRACT_KEYS, c.contract_status), CONTRACT_BADGE[c.contract_status] || "neutral"));
+    tr.appendChild(tdContract);
+
+    const tdRenewal = document.createElement("td");
+    tdRenewal.textContent = formatDate(c.renewal_date, state.lang);
+    tr.appendChild(tdRenewal);
+
+    const tdPayment = document.createElement("td");
+    tdPayment.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), PAYMENT_BADGE[c.payment_status] || "neutral"));
+    tr.appendChild(tdPayment);
+
+    const tdInvoice = document.createElement("td");
+    tdInvoice.appendChild(badge(statusLabel(INVOICE_KEYS, c.invoice_request_status), INVOICE_BADGE[c.invoice_request_status] || "neutral"));
+    tr.appendChild(tdInvoice);
+
+    const tdRisk = document.createElement("td");
+    const pill = document.createElement("span");
+    pill.className = `risk-pill badge-${RISK_BADGE[c.risk.level] || "neutral"}`;
+    pill.textContent = `${statusLabel(RISK_KEYS, c.risk.level)}${c.risk.level !== "None" ? " · " + c.risk.score : ""}`;
+    tdRisk.appendChild(pill);
+    tr.appendChild(tdRisk);
+
+    tbody.appendChild(tr);
+  });
+
+  const { page, pageSize } = state.pagination;
+  const start = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = (page - 1) * pageSize + companies.length;
+  countEl.textContent = state.lang === "ja"
+    ? `${totalCount}社中 ${start}-${end}社を表示`
+    : `Showing ${start}-${end} of ${totalCount} companies`;
+}
+
+function renderPager() {
+  const total = state.companies.length;
+  const { page, pageSize } = state.pagination;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const clampedPage = Math.min(page, totalPages);
+  state.pagination.page = clampedPage;
+
+  document.getElementById("pagerPrev").disabled = clampedPage <= 1;
+  document.getElementById("pagerNext").disabled = clampedPage >= totalPages;
+  document.getElementById("pagerLabel").textContent = state.lang === "ja"
+    ? `${clampedPage} / ${totalPages} ページ`
+    : `Page ${clampedPage} of ${totalPages}`;
+  document.getElementById("pagerControls").classList.toggle("hidden", total === 0);
+}
+
+function renderTablePage() {
+  const total = state.companies.length;
+  const { page, pageSize } = state.pagination;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const clampedPage = Math.min(page, totalPages);
+  state.pagination.page = clampedPage;
+  const start = (clampedPage - 1) * pageSize;
+  renderTable(state.companies.slice(start, start + pageSize), total);
+  renderPager();
+}
+
+// Changing the page size (or paging) changes the table's height, which can
+// leave the pager/Next button scrolled out of view below the shrunk table --
+// keep it in view so staff don't lose their place.
+function scrollPagerIntoView() {
+  const pager = document.getElementById("pagerControls");
+  const rect = pager.getBoundingClientRect();
+  const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+  if (!inView) {
+    pager.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+}
+
+/* ---------------------------- charts ---------------------------- */
+function renderCharts() {
+  if (!state.summary) return;
+  const s = state.summary;
+
+  const contractColors = { "Active": "var(--status-good)", "Pending Renewal": "var(--status-warning)", "Expired": "var(--status-serious)", "Cancelled": "var(--status-neutral)" };
+  const paymentColors = { "Paid": "var(--status-good)", "Not Paid": "var(--status-warning)", "Late Payment": "var(--status-critical)" };
+  const invoiceColors = { "Sent": "var(--status-good)", "Not Sent": "var(--status-serious)" };
+
+  const resolve = (c) => Charts.cssVar(c.replace("var(", "").replace(")", ""));
+
+  const toData = (breakdown, keyMap, colorMap) =>
+    Object.keys(colorMap)
+      .filter((k) => breakdown[k])
+      .map((k) => ({ label: statusLabel(keyMap, k), value: breakdown[k] || 0, color: resolve(colorMap[k]) }));
+
+  Charts.donut(document.getElementById("chartContract"), toData(s.contract_status_breakdown, CONTRACT_KEYS, contractColors), { centerLabel: t("kpiTotal") });
+  Charts.donut(document.getElementById("chartPayment"), toData(s.payment_status_breakdown, PAYMENT_KEYS, paymentColors), { centerLabel: t("kpiTotal") });
+  Charts.donut(document.getElementById("chartInvoice"), toData(s.invoice_status_breakdown, INVOICE_KEYS, invoiceColors), { centerLabel: t("kpiTotal") });
+
+  if (state.renewalsByMonth) {
+    const critical = resolve("--status-critical");
+    const warning = resolve("--status-warning");
+    const indigo = resolve("--accent-indigo");
+    const barData = state.renewalsByMonth.map((b, i) => ({
+      label: monthLabel(b.month, state.lang),
+      value: b.count,
+      color: i === 0 ? critical : i <= 2 ? warning : indigo,
+    }));
+    Charts.barChart(document.getElementById("chartRenewals"), barData, {
+      legend: [
+        { label: t("legendDueSoon"), color: critical },
+        { label: t("legendDueMid"), color: warning },
+        { label: t("legendDueLater"), color: indigo },
+      ],
+    });
+  }
+}
+
+/* ---------------------------- insight banner ---------------------------- */
+async function loadInsights() {
+  const headline = document.getElementById("insightHeadline");
+  const bullets = document.getElementById("insightBullets");
+  const source = document.getElementById("insightSource");
+
+  if (state.insightCache[state.lang]) {
+    paintInsights(state.insightCache[state.lang]);
+    return;
+  }
+  headline.textContent = "";
+  bullets.innerHTML = "";
+  source.textContent = "";
+  stopLoader("insight");
+  activeLoaders.insight = createLoader("insightLoadingSteps");
+  headline.appendChild(activeLoaders.insight);
+
+  try {
+    const data = await api(`/api/ai/portfolio-insights?lang=${state.lang}`, { method: "POST" });
+    stopLoader("insight");
+    state.insightCache[state.lang] = data;
+    paintInsights(data);
+  } catch (e) {
+    stopLoader("insight");
+    headline.textContent = t("insightUnavailable");
+  }
+}
+
+function paintInsights(data) {
+  document.getElementById("insightHeadline").textContent = data.headline;
+  const bullets = document.getElementById("insightBullets");
+  bullets.innerHTML = "";
+  (data.bullets || []).forEach((b) => {
+    const li = document.createElement("li");
+    li.textContent = b;
+    bullets.appendChild(li);
+  });
+  document.getElementById("insightSource").textContent = data.source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
+}
+
+/* ---------------------------- table data loading ---------------------------- */
+let searchDebounce;
+async function loadTable() {
+  const params = new URLSearchParams();
+  if (state.filters.search) params.set("search", state.filters.search);
+  if (state.filters.contract_status) params.set("contract_status", state.filters.contract_status);
+  if (state.filters.payment_status) params.set("payment_status", state.filters.payment_status);
+  if (state.filters.invoice_status) params.set("invoice_status", state.filters.invoice_status);
+
+  try {
+    const companies = await api(`/api/companies?${params.toString()}`);
+    state.companies = companies;
+    renderTablePage();
+    if (companies.length === 0 && state.filters.search) {
+      renderSearchSuggestions(state.filters.search);
+    }
+  } catch (e) {
+    toast(t("fetchError"));
+  }
+  updateResetVisibility();
+}
+
+function updateResetVisibility() {
+  const active = state.filters.search || state.filters.contract_status || state.filters.payment_status || state.filters.invoice_status;
+  document.getElementById("resetBtn").classList.toggle("hidden", !active);
+}
+
+function resetFilters() {
+  document.getElementById("searchInput").value = "";
+  document.getElementById("filterContract").value = "";
+  document.getElementById("filterPayment").value = "";
+  document.getElementById("filterInvoice").value = "";
+  document.getElementById("askAiInput").value = "";
+  document.getElementById("askAiAnswer").textContent = "";
+  stopLoader("askAi");
+  state.filters = { search: "", contract_status: "", payment_status: "", invoice_status: "" };
+  state.pagination.page = 1;
+  loadTable();
+}
+
+/* Fuzzy "did you mean" suggestions -- only fetched when the real search comes
+   back empty, so a plain substring search stays the fast/cheap default path. */
+async function renderSearchSuggestions(term) {
+  const textEl = document.getElementById("tableEmptyText");
+  const suggestRow = document.getElementById("suggestRow");
+  try {
+    const suggestions = await api(`/api/companies/suggest?q=${encodeURIComponent(term)}`);
+    // the search box may have changed while this was in flight
+    if (state.filters.search !== term) return;
+
+    if (!suggestions.length) {
+      textEl.textContent = t("noResults");
+      suggestRow.classList.add("hidden");
+      suggestRow.innerHTML = "";
+      return;
+    }
+
+    textEl.textContent = t("noResultsTypo");
+    suggestRow.innerHTML = "";
+    suggestRow.classList.remove("hidden");
+
+    const label = document.createElement("span");
+    label.className = "suggest-label";
+    label.textContent = t("didYouMean");
+    suggestRow.appendChild(label);
+
+    suggestions.forEach((s) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "suggest-chip";
+      chip.textContent = s.name;
+      chip.addEventListener("click", () => {
+        document.getElementById("searchInput").value = s.name;
+        state.filters.search = s.name;
+        loadTable();
+      });
+      suggestRow.appendChild(chip);
+    });
+  } catch (e) {
+    // suggestions are a nicety, not a critical path -- fail silent
+  }
+}
+
+async function loadDashboardData() {
+  try {
+    const [summary, radar, renewals] = await Promise.all([
+      api("/api/analytics/summary"),
+      api("/api/analytics/risk-radar?limit=8"),
+      api("/api/analytics/renewals-by-month"),
+    ]);
+    state.summary = summary;
+    state.renewalsByMonth = renewals;
+    renderKPIs(summary);
+    renderRadar(radar);
+    renderCharts();
+  } catch (e) {
+    toast(t("fetchError"));
+  }
+}
+
+/* ---------------------------- segmentation & data quality ---------------------------- */
+function riskLevelVar(count, total) {
+  if (!total || count === 0) return "--status-good";
+  const ratio = count / total;
+  if (ratio >= 0.35) return "--status-critical";
+  if (ratio >= 0.15) return "--status-warning";
+  return "--status-serious";
+}
+
+async function loadSegmentation() {
+  try {
+    const segmentation = await api("/api/analytics/segmentation");
+    state.segmentation = segmentation;
+    renderPlanCards(segmentation.by_plan);
+    renderIndustryTable(segmentation.by_industry);
+  } catch (e) {
+    toast(t("fetchError"));
+  }
+  loadSegmentInsight();
+}
+
+function renderPlanCards(byPlan) {
+  const wrap = document.getElementById("planCards");
+  wrap.innerHTML = "";
+  byPlan.forEach((g) => {
+    const card = document.createElement("div");
+    card.className = "plan-card";
+
+    const name = document.createElement("div");
+    name.className = "plan-name";
+    name.textContent = g.key;
+
+    const total = document.createElement("div");
+    total.className = "plan-total";
+    total.textContent = g.total;
+
+    const stats = document.createElement("div");
+    stats.className = "plan-stats";
+
+    const activeStat = document.createElement("span");
+    activeStat.className = "plan-stat";
+    activeStat.style.background = "color-mix(in srgb, var(--status-good) 18%, transparent)";
+    activeStat.style.color = "var(--status-good)";
+    activeStat.textContent = `${t("activeLabel")} ${g.active}`;
+    stats.appendChild(activeStat);
+
+    const riskVar = riskLevelVar(g.at_risk_count, g.total);
+    const riskStat = document.createElement("span");
+    riskStat.className = "plan-stat";
+    riskStat.style.background = `color-mix(in srgb, var(${riskVar}) 18%, transparent)`;
+    riskStat.style.color = `var(${riskVar})`;
+    riskStat.textContent = `${t("atRiskLabel")} ${g.at_risk_count}`;
+    stats.appendChild(riskStat);
+
+    card.appendChild(name);
+    card.appendChild(total);
+    card.appendChild(stats);
+    wrap.appendChild(card);
+  });
+}
+
+function renderIndustryTable(byIndustry) {
+  const tbody = document.getElementById("industryTableBody");
+  tbody.innerHTML = "";
+  byIndustry.forEach((g) => {
+    const tr = document.createElement("tr");
+
+    const tdName = document.createElement("td");
+    tdName.textContent = g.key;
+
+    const tdTotal = document.createElement("td");
+    tdTotal.className = "num";
+    tdTotal.textContent = g.total;
+
+    const tdRisk = document.createElement("td");
+    tdRisk.className = "num at-risk-cell";
+    tdRisk.style.color = `var(${riskLevelVar(g.at_risk_count, g.total)})`;
+    tdRisk.textContent = g.at_risk_count;
+
+    const tdLate = document.createElement("td");
+    tdLate.className = "num";
+    tdLate.textContent = g.payments_late;
+
+    const tdNotSent = document.createElement("td");
+    tdNotSent.className = "num";
+    tdNotSent.textContent = g.invoices_not_sent;
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdTotal);
+    tr.appendChild(tdRisk);
+    tr.appendChild(tdLate);
+    tr.appendChild(tdNotSent);
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadSegmentInsight() {
+  const headline = document.getElementById("segmentInsightHeadline");
+  const bullets = document.getElementById("segmentInsightBullets");
+  const source = document.getElementById("segmentInsightSource");
+
+  if (state.segmentInsightCache[state.lang]) {
+    paintSegmentInsight(state.segmentInsightCache[state.lang]);
+    return;
+  }
+
+  headline.textContent = "";
+  bullets.innerHTML = "";
+  source.textContent = "";
+  stopLoader("segment");
+  activeLoaders.segment = createLoader("segmentInsightLoadingSteps");
+  headline.appendChild(activeLoaders.segment);
+
+  try {
+    const data = await api(`/api/ai/segment-insights?lang=${state.lang}`, { method: "POST" });
+    stopLoader("segment");
+    state.segmentInsightCache[state.lang] = data;
+    paintSegmentInsight(data);
+  } catch (e) {
+    stopLoader("segment");
+    headline.textContent = t("insightUnavailable");
+  }
+}
+
+function paintSegmentInsight(data) {
+  document.getElementById("segmentInsightHeadline").textContent = data.headline;
+  const bullets = document.getElementById("segmentInsightBullets");
+  bullets.innerHTML = "";
+  (data.bullets || []).forEach((b) => {
+    const li = document.createElement("li");
+    li.textContent = b;
+    bullets.appendChild(li);
+  });
+  document.getElementById("segmentInsightSource").textContent = data.source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
+}
+
+/* ---------------------------- drawer ---------------------------- */
+async function openDrawer(id) {
+  state.drawerCompanyId = id;
+  const backdrop = document.getElementById("drawerBackdrop");
+  const drawer = document.getElementById("drawer");
+  backdrop.classList.remove("hidden");
+  drawer.classList.remove("hidden");
+  drawer.setAttribute("aria-hidden", "false");
+
+  const content = document.getElementById("drawerContent");
+  content.innerHTML = `<div style="padding-top:60px;color:var(--text-muted);font-size:13px;">…</div>`;
+
+  try {
+    const c = await api(`/api/companies/${id}`);
+    renderDrawer(c);
+    loadBrief(c);
+  } catch (e) {
+    toast(t("fetchError"));
+  }
+}
+
+function closeDrawer() {
+  document.getElementById("drawerBackdrop").classList.add("hidden");
+  const drawer = document.getElementById("drawer");
+  drawer.classList.add("hidden");
+  drawer.setAttribute("aria-hidden", "true");
+  state.drawerCompanyId = null;
+  stopLoader("brief");
+}
+
+function renderDrawer(c) {
+  const content = document.getElementById("drawerContent");
+  content.innerHTML = "";
+
+  const title = document.createElement("div");
+  title.className = "drawer-title";
+  title.textContent = c.name;
+  content.appendChild(title);
+
+  const meta = document.createElement("div");
+  meta.className = "drawer-meta";
+  meta.textContent = c.industry;
+  content.appendChild(meta);
+
+  const badges = document.createElement("div");
+  badges.className = "drawer-badges";
+  badges.appendChild(badge(statusLabel(CONTRACT_KEYS, c.contract_status), CONTRACT_BADGE[c.contract_status] || "neutral"));
+  badges.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), PAYMENT_BADGE[c.payment_status] || "neutral"));
+  badges.appendChild(badge(statusLabel(INVOICE_KEYS, c.invoice_request_status), INVOICE_BADGE[c.invoice_request_status] || "neutral"));
+  content.appendChild(badges);
+
+  const aiCard = document.createElement("div");
+  aiCard.className = "ai-card";
+  aiCard.id = "aiBriefCard";
+  aiCard.innerHTML = `<div class="ai-card-head"><span class="label">${t("aiCallScript")}</span><span id="aiSourceTag" style="font-size:10px;color:var(--text-muted);"></span></div>
+    <div class="ai-script" id="aiScriptText"></div>`;
+  content.appendChild(aiCard);
+  stopLoader("brief");
+  activeLoaders.brief = createLoader("briefLoadingSteps");
+  document.getElementById("aiScriptText").appendChild(activeLoaders.brief);
+
+  const info = document.createElement("div");
+  info.className = "info-grid";
+  const items = [
+    ["drawerContact", c.contact_person || "—"],
+    ["drawerEmail", c.contact_email || "—"],
+    ["drawerPhone", c.contact_phone || "—"],
+    ["drawerPlan", c.membership_plan],
+    ["drawerFee", `¥${c.monthly_fee_jpy.toLocaleString()}`],
+    ["drawerStarted", formatDate(c.contract_start_date, state.lang)],
+    ["colRenewal", formatDate(c.renewal_date, state.lang)],
+    ["drawerInvoiceSent", formatDate(c.invoice_sent_date, state.lang)],
+    ["drawerLastPayment", formatDate(c.last_payment_date, state.lang)],
+  ];
+  items.forEach(([labelKey, val]) => {
+    const item = document.createElement("div");
+    item.className = "info-item";
+    const k = document.createElement("div");
+    k.className = "k";
+    k.textContent = t(labelKey);
+    const v = document.createElement("div");
+    v.className = "v";
+    v.textContent = val;
+    item.appendChild(k);
+    item.appendChild(v);
+    info.appendChild(item);
+  });
+  content.appendChild(info);
+
+  if (c.notes) {
+    const notes = document.createElement("div");
+    notes.className = "info-item";
+    notes.style.marginBottom = "18px";
+    notes.innerHTML = `<div class="k">${t("drawerNotes")}</div><div class="v" style="font-weight:400;">${escapeHtml(c.notes)}</div>`;
+    content.appendChild(notes);
+  }
+
+  const editor = buildStatusEditor(c);
+  content.appendChild(editor);
+
+  const timelineTitle = document.createElement("h3");
+  timelineTitle.textContent = t("timelineTitle");
+  timelineTitle.style.fontSize = "13.5px";
+  timelineTitle.style.margin = "0 0 8px";
+  content.appendChild(timelineTitle);
+
+  const timeline = document.createElement("div");
+  timeline.className = "timeline";
+  c.timeline.forEach((ev) => {
+    const item = document.createElement("div");
+    item.className = "timeline-item";
+    const dot = document.createElement("div");
+    dot.className = "timeline-dot";
+    const date = document.createElement("div");
+    date.className = "timeline-date";
+    date.textContent = formatDate(ev.event_date, state.lang);
+    const desc = document.createElement("div");
+    desc.className = "timeline-desc";
+    desc.textContent = t(EVENT_KEYS[ev.event_type] || ev.event_type);
+    item.appendChild(dot);
+    item.appendChild(date);
+    item.appendChild(desc);
+    timeline.appendChild(item);
+  });
+  content.appendChild(timeline);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function buildStatusEditor(c) {
+  const wrap = document.createElement("div");
+  wrap.className = "status-editor";
+
+  const heading = document.createElement("div");
+  heading.style.fontSize = "12px";
+  heading.style.fontWeight = "700";
+  heading.style.color = "var(--text-muted)";
+  heading.style.textTransform = "uppercase";
+  heading.style.letterSpacing = "0.05em";
+  heading.style.marginBottom = "2px";
+  heading.textContent = t("statusEditorTitle");
+  wrap.appendChild(heading);
+
+  const makeRow = (labelKey, id, keyMap, current) => {
+    const row = document.createElement("div");
+    row.className = "row";
+    const label = document.createElement("label");
+    label.textContent = t(labelKey);
+    label.setAttribute("for", id);
+    const select = document.createElement("select");
+    select.id = id;
+    Object.keys(keyMap).forEach((val) => {
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = t(keyMap[val]);
+      if (val === current) opt.selected = true;
+      select.appendChild(opt);
+    });
+    row.appendChild(label);
+    row.appendChild(select);
+    return row;
+  };
+
+  // "Late Payment" is computed, never a raw value staff can pick -- the select
+  // only ever offers the ground truth (Paid/Not Paid) it was derived from.
+  const rawPayment = c.payment_status === "Late Payment" ? "Not Paid" : c.payment_status;
+
+  wrap.appendChild(makeRow("colContract", "editContract", CONTRACT_KEYS, c.contract_status));
+  wrap.appendChild(makeRow("colPayment", "editPayment", PAYMENT_WRITE_KEYS, rawPayment));
+  wrap.appendChild(makeRow("colInvoice", "editInvoice", INVOICE_WRITE_KEYS, c.invoice_request_status));
+
+  const btnRow = document.createElement("div");
+  btnRow.className = "row";
+  btnRow.style.marginTop = "4px";
+  btnRow.style.gap = "8px";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "btn-primary";
+  saveBtn.textContent = t("save");
+  saveBtn.addEventListener("click", () => saveStatus(c.id));
+  btnRow.appendChild(saveBtn);
+
+  const modifyBtn = document.createElement("button");
+  modifyBtn.className = "btn-ghost";
+  modifyBtn.type = "button";
+  modifyBtn.textContent = t("modifyRecord");
+  modifyBtn.addEventListener("click", () => openRecordModal("edit", c));
+  btnRow.appendChild(modifyBtn);
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "btn-ghost";
+  deleteBtn.type = "button";
+  deleteBtn.textContent = t("deleteRecord");
+  deleteBtn.addEventListener("click", () => deleteRecord(c.id, c.name));
+  btnRow.appendChild(deleteBtn);
+
+  wrap.appendChild(btnRow);
+
+  return wrap;
+}
+
+async function saveStatus(id) {
+  const payload = {
+    contract_status: document.getElementById("editContract").value,
+    payment_status: document.getElementById("editPayment").value,
+    invoice_request_status: document.getElementById("editInvoice").value,
+  };
+  try {
+    const updated = await api(`/api/companies/${id}/status`, { method: "PATCH", body: JSON.stringify(payload) });
+    toast(t("saved"));
+    renderDrawer(updated);
+    loadBrief(updated);
+    await Promise.all([loadTable(), loadDashboardData()]);
+  } catch (e) {
+    toast(e.detail || t("fetchError"));
+  }
+}
+
+async function deleteRecord(id, name) {
+  const msg = state.lang === "ja" ? `${name} を削除しますか？この操作は取り消せません。` : `Delete ${name}? This cannot be undone.`;
+  if (!window.confirm(msg)) return;
+  try {
+    await api(`/api/companies/${id}`, { method: "DELETE" });
+    toast(t("deleted"));
+    closeDrawer();
+    await Promise.all([loadTable(), loadDashboardData()]);
+  } catch (e) {
+    toast(e.detail || t("fetchError"));
+  }
+}
+
+/* ---------------------------- add / modify record modal ---------------------------- */
+function openRecordModal(mode, company) {
+  const modal = document.getElementById("recordModal");
+  const backdrop = document.getElementById("recordModalBackdrop");
+  document.getElementById("recordModalTitle").textContent = mode === "edit" ? t("modifyRecord") : t("addRecord");
+
+  const c = company || {};
+  document.getElementById("fName").value = c.name || "";
+  document.getElementById("fNameKana").value = c.name_kana || "";
+  document.getElementById("fIndustry").value = c.industry || "";
+  document.getElementById("fPlan").value = c.membership_plan || "";
+  document.getElementById("fContactPerson").value = c.contact_person || "";
+  document.getElementById("fContactEmail").value = c.contact_email || "";
+  document.getElementById("fContactPhone").value = c.contact_phone || "";
+  document.getElementById("fContractStatus").value = c.contract_status || "Active";
+  document.getElementById("fContractStart").value = c.contract_start_date || "";
+  document.getElementById("fRenewalDate").value = c.renewal_date || "";
+  document.getElementById("fPaymentStatus").value = c.payment_status === "Late Payment" ? "Not Paid" : (c.payment_status || "Not Paid");
+  document.getElementById("fInvoiceStatus").value = c.invoice_request_status || "Not Sent";
+  document.getElementById("fFee").value = c.monthly_fee_jpy != null ? c.monthly_fee_jpy : "";
+  document.getElementById("fNotes").value = c.notes || "";
+
+  document.getElementById("recordForm").dataset.mode = mode;
+  document.getElementById("recordForm").dataset.id = c.id || "";
+
+  backdrop.classList.remove("hidden");
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeRecordModal() {
+  document.getElementById("recordModalBackdrop").classList.add("hidden");
+  const modal = document.getElementById("recordModal");
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+/* ---------------------------- help guide modal ---------------------------- */
+function renderHelpGuide() {
+  const guide = HELP_GUIDE[state.lang] || HELP_GUIDE.en;
+  document.getElementById("helpModalTitle").textContent = guide.title;
+  const body = document.getElementById("helpModalBody");
+  body.innerHTML = "";
+  guide.sections.forEach((section) => {
+    const wrap = document.createElement("div");
+    wrap.className = "help-section";
+    const h = document.createElement("h3");
+    h.textContent = section.h;
+    wrap.appendChild(h);
+    section.p.forEach((text) => {
+      const p = document.createElement("p");
+      p.textContent = text;
+      wrap.appendChild(p);
+    });
+    if (section.items.length) {
+      const ul = document.createElement("ul");
+      section.items.forEach((text) => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        ul.appendChild(li);
+      });
+      wrap.appendChild(ul);
+    }
+    body.appendChild(wrap);
+  });
+}
+
+function openHelpModal() {
+  renderHelpGuide();
+  document.getElementById("helpModalBackdrop").classList.remove("hidden");
+  const modal = document.getElementById("helpModal");
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeHelpModal() {
+  document.getElementById("helpModalBackdrop").classList.add("hidden");
+  const modal = document.getElementById("helpModal");
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitRecordModal(e) {
+  e.preventDefault();
+  const form = document.getElementById("recordForm");
+  const mode = form.dataset.mode;
+  const id = form.dataset.id;
+
+  const payload = {
+    name: document.getElementById("fName").value.trim(),
+    name_kana: document.getElementById("fNameKana").value.trim() || null,
+    industry: document.getElementById("fIndustry").value.trim(),
+    membership_plan: document.getElementById("fPlan").value.trim(),
+    contact_person: document.getElementById("fContactPerson").value.trim() || null,
+    contact_email: document.getElementById("fContactEmail").value.trim() || null,
+    contact_phone: document.getElementById("fContactPhone").value.trim() || null,
+    contract_status: document.getElementById("fContractStatus").value,
+    contract_start_date: document.getElementById("fContractStart").value,
+    renewal_date: document.getElementById("fRenewalDate").value,
+    payment_status: document.getElementById("fPaymentStatus").value,
+    monthly_fee_jpy: parseInt(document.getElementById("fFee").value, 10) || 0,
+    invoice_request_status: document.getElementById("fInvoiceStatus").value,
+    notes: document.getElementById("fNotes").value.trim() || null,
+  };
+
+  try {
+    const saved = mode === "edit"
+      ? await api(`/api/companies/${id}`, { method: "PUT", body: JSON.stringify(payload) })
+      : await api("/api/companies", { method: "POST", body: JSON.stringify(payload) });
+    toast(t("recordSaved"));
+    closeRecordModal();
+    await Promise.all([loadTable(), loadDashboardData()]);
+    if (mode === "edit") openDrawer(saved.id);
+  } catch (e) {
+    toast(e.detail || t("fetchError"));
+  }
+}
+
+function validateRecordFormPaymentInvoice() {
+  const paymentSelect = document.getElementById("fPaymentStatus");
+  const invoiceSelect = document.getElementById("fInvoiceStatus");
+  const paidOption = paymentSelect.querySelector('option[value="Paid"]');
+  const invoiceNotSent = invoiceSelect.value !== "Sent";
+  paidOption.disabled = invoiceNotSent;
+  if (invoiceNotSent && paymentSelect.value === "Paid") {
+    paymentSelect.value = "Not Paid";
+  }
+}
+
+async function loadBrief(c) {
+  try {
+    const brief = await api(`/api/ai/company-brief/${c.id}?lang=${state.lang}`, { method: "POST" });
+    stopLoader("brief");
+    const scriptEl = document.getElementById("aiScriptText");
+    const sourceEl = document.getElementById("aiSourceTag");
+    if (!scriptEl) return;
+    scriptEl.textContent = brief.call_script;
+    const action = document.createElement("div");
+    action.className = "ai-action";
+    action.innerHTML = `<strong>${t("aiRecommended")}:</strong> `;
+    action.appendChild(document.createTextNode(brief.recommended_action));
+    scriptEl.after(action);
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy-btn";
+    copyBtn.textContent = t("copy");
+    copyBtn.style.marginTop = "8px";
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(brief.call_script);
+      copyBtn.textContent = t("copied");
+      setTimeout(() => (copyBtn.textContent = t("copy")), 1500);
+    });
+    action.after(copyBtn);
+
+    if (sourceEl) sourceEl.textContent = brief.source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
+  } catch (e) {
+    stopLoader("brief");
+    const scriptEl = document.getElementById("aiScriptText");
+    if (scriptEl) scriptEl.textContent = t("insightUnavailable");
+  }
+}
+
+/* ---------------------------- CSV export ---------------------------- */
+function exportCsv() {
+  const header = [t("colCompany"), t("colIndustry"), t("colContract"), t("colRenewal"), t("colPayment"), t("colInvoice"), t("colRisk")];
+  const rows = state.companies.map((c) => [
+    c.name, c.industry,
+    statusLabel(CONTRACT_KEYS, c.contract_status),
+    formatDate(c.renewal_date, state.lang),
+    statusLabel(PAYMENT_KEYS, c.payment_status),
+    statusLabel(INVOICE_KEYS, c.invoice_request_status),
+    statusLabel(RISK_KEYS, c.risk.level),
+  ]);
+  const csv = [header, ...rows]
+    .map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\r\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sakura_deeptech_shibuya_members.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------------------------- ask AI ---------------------------- */
+async function submitAskAi() {
+  const q = document.getElementById("askAiInput").value.trim();
+  if (!q) return;
+
+  const submitBtn = document.getElementById("askAiSubmit");
+  const answerEl = document.getElementById("askAiAnswer");
+  submitBtn.disabled = true;
+  submitBtn.classList.add("is-loading");
+  answerEl.innerHTML = "";
+  stopLoader("askAi");
+  activeLoaders.askAi = createLoader("askAiLoadingSteps");
+  answerEl.appendChild(activeLoaders.askAi);
+
+  try {
+    const result = await api(`/api/ai/smart-search?lang=${state.lang}`, { method: "POST", body: JSON.stringify({ question: q }) });
+    document.getElementById("searchInput").value = result.search || "";
+    document.getElementById("filterContract").value = result.contract_status || "";
+    document.getElementById("filterPayment").value = result.payment_status || "";
+    document.getElementById("filterInvoice").value = result.invoice_status || "";
+    state.filters.search = result.search || "";
+    state.filters.contract_status = result.contract_status || "";
+    state.filters.payment_status = result.payment_status || "";
+    state.filters.invoice_status = result.invoice_status || "";
+    state.pagination.page = 1;
+    stopLoader("askAi");
+    answerEl.innerHTML = "";
+    const answerText = document.createElement("span");
+    answerText.textContent = result.answer || "";
+    answerEl.appendChild(answerText);
+    if (result.source) {
+      const tag = document.createElement("span");
+      tag.style.marginLeft = "8px";
+      tag.style.fontSize = "10px";
+      tag.style.color = "var(--text-muted)";
+      tag.style.textTransform = "uppercase";
+      tag.style.letterSpacing = "0.05em";
+      tag.textContent = result.source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
+      answerEl.appendChild(tag);
+    }
+    await loadTable();
+  } catch (e) {
+    stopLoader("askAi");
+    answerEl.textContent = "";
+    toast(t("fetchError"));
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.classList.remove("is-loading");
+  }
+}
+
+/* ---------------------------- theme / lang toggles ---------------------------- */
+function applyTheme() {
+  document.documentElement.setAttribute("data-theme", state.theme);
+}
+
+function toggleTheme() {
+  state.theme = state.theme === "dark" ? "light" : "dark";
+  localStorage.setItem("sds_theme", state.theme);
+  applyTheme();
+  renderCharts();
+}
+
+function toggleLang() {
+  state.lang = state.lang === "en" ? "ja" : "en";
+  localStorage.setItem("sds_lang", state.lang);
+  applyStaticI18n();
+  renderKPIs(state.summary || { total_companies: 0, active_contracts: 0, renewals_due_30d: 0, payments_late: 0, invoices_not_sent: 0 });
+  loadTable();
+  loadDashboardData();
+  loadInsights();
+  loadSegmentation();
+  renderModelStatus();
+  updateClock();
+  if (state.drawerCompanyId) openDrawer(state.drawerCompanyId);
+}
+
+/* ---------------------------- model connection status ---------------------------- */
+function renderModelStatus() {
+  const dot = document.querySelector("#modelStatus .status-dot");
+  const text = document.getElementById("modelStatusText");
+  const badge = document.getElementById("modelStatus");
+  const s = state.modelStatus;
+
+  if (!s) {
+    dot.className = "status-dot checking";
+    text.textContent = t("modelChecking");
+    badge.title = "";
+    return;
+  }
+  if (s.connected) {
+    dot.className = "status-dot connected";
+    text.textContent = t("modelConnected");
+  } else if (s.demo_mode) {
+    dot.className = "status-dot fallback";
+    text.textContent = t("modelDemoMode");
+  } else {
+    dot.className = "status-dot fallback";
+    text.textContent = t("modelFallback");
+  }
+  badge.title = s.message || "";
+}
+
+async function checkModelStatus() {
+  state.modelStatus = null;
+  renderModelStatus();
+  try {
+    state.modelStatus = await api("/api/ai/status");
+  } catch (e) {
+    state.modelStatus = { connected: false, demo_mode: false, message: "" };
+  }
+  renderModelStatus();
+}
+
+/* ---------------------------- clock ---------------------------- */
+function updateClock() {
+  const now = new Date();
+  const locale = state.lang === "ja" ? "ja-JP" : "en-US";
+  document.getElementById("clock").textContent = now.toLocaleString(locale, {
+    hour: "2-digit", minute: "2-digit", month: "short", day: "numeric",
+  });
+}
+
+/* ---------------------------- init ---------------------------- */
+function initEvents() {
+  document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+  document.getElementById("langToggle").addEventListener("click", toggleLang);
+
+  document.getElementById("searchInput").addEventListener("input", (e) => {
+    clearTimeout(searchDebounce);
+    const val = e.target.value;
+    searchDebounce = setTimeout(() => {
+      state.filters.search = val;
+      state.pagination.page = 1;
+      loadTable();
+    }, 250);
+  });
+
+  ["filterContract", "filterPayment", "filterInvoice"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", (e) => {
+      const key = { filterContract: "contract_status", filterPayment: "payment_status", filterInvoice: "invoice_status" }[id];
+      state.filters[key] = e.target.value;
+      state.pagination.page = 1;
+      loadTable();
+    });
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", resetFilters);
+  document.getElementById("askAiSubmit").addEventListener("click", submitAskAi);
+  document.getElementById("askAiInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitAskAi();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", exportCsv);
+
+  document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
+    state.pagination.pageSize = parseInt(e.target.value, 10);
+    state.pagination.page = 1;
+    renderTablePage();
+    scrollPagerIntoView();
+  });
+  document.getElementById("pagerPrev").addEventListener("click", () => {
+    state.pagination.page = Math.max(1, state.pagination.page - 1);
+    renderTablePage();
+    scrollPagerIntoView();
+  });
+  document.getElementById("pagerNext").addEventListener("click", () => {
+    state.pagination.page += 1;
+    renderTablePage();
+    scrollPagerIntoView();
+  });
+
+  document.getElementById("addRecordBtn").addEventListener("click", () => openRecordModal("add", null));
+  document.getElementById("recordModalClose").addEventListener("click", closeRecordModal);
+  document.getElementById("recordModalBackdrop").addEventListener("click", closeRecordModal);
+  document.getElementById("recordFormCancel").addEventListener("click", closeRecordModal);
+  document.getElementById("recordForm").addEventListener("submit", submitRecordModal);
+  document.getElementById("fInvoiceStatus").addEventListener("change", validateRecordFormPaymentInvoice);
+
+  document.getElementById("drawerClose").addEventListener("click", closeDrawer);
+  document.getElementById("drawerBackdrop").addEventListener("click", closeDrawer);
+
+  document.getElementById("helpBtn").addEventListener("click", openHelpModal);
+  document.getElementById("helpModalClose").addEventListener("click", closeHelpModal);
+  document.getElementById("helpModalBackdrop").addEventListener("click", closeHelpModal);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { closeDrawer(); closeRecordModal(); closeHelpModal(); }
+  });
+}
+
+async function init() {
+  applyTheme();
+  applyStaticI18n();
+  updateClock();
+  setInterval(updateClock, 30000);
+  initEvents();
+  await loadDashboardData();
+  await loadTable();
+  loadInsights();
+  loadSegmentation();
+  checkModelStatus();
+  setInterval(checkModelStatus, 120000);
+}
+
+init();

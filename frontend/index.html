@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sakura Deeptech Shibuya — Member Console</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="bg-mesh" aria-hidden="true"></div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <img src="/static/img/tokyu_logo.jpg" alt="Tokyu Land Corporation" class="brand-logo">
+    <div class="brand-text">
+      <span class="brand-title" data-i18n="brandTitle">Sakura Deeptech Shibuya</span>
+      <span class="brand-subtitle" data-i18n="brandSubtitle">Member Status Console</span>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <div class="model-status" id="modelStatus" title="">
+      <span class="status-dot checking"></span>
+      <span class="status-text" id="modelStatusText"></span>
+    </div>
+    <div class="clock" id="clock"></div>
+    <button class="pill-toggle" id="langToggle" type="button" aria-label="Toggle language">
+      <span class="pill-opt" data-lang="en">EN</span>
+      <span class="pill-opt" data-lang="ja">日本語</span>
+    </button>
+    <button class="icon-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" fill="currentColor"/></svg>
+    </button>
+    <button class="icon-toggle" id="helpBtn" type="button" aria-label="Help">
+      <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="shell">
+
+  <section class="kpi-row" id="kpiRow" aria-label="Key metrics">
+    <div class="kpi-tile" data-kpi="total">
+      <span class="kpi-label" data-i18n="kpiTotal">Total Members</span>
+      <span class="kpi-value" id="kpiTotal">—</span>
+    </div>
+    <div class="kpi-tile" data-kpi="active">
+      <span class="kpi-label" data-i18n="kpiActive">Active Contracts</span>
+      <span class="kpi-value" id="kpiActive">—</span>
+    </div>
+    <div class="kpi-tile accent-warning" data-kpi="renewals">
+      <span class="kpi-label" data-i18n="kpiRenewals">Renewals Due (30d)</span>
+      <span class="kpi-value" id="kpiRenewals">—</span>
+    </div>
+    <div class="kpi-tile accent-critical" data-kpi="overdue">
+      <span class="kpi-label" data-i18n="kpiOverdue">Late Payments</span>
+      <span class="kpi-value" id="kpiOverdue">—</span>
+    </div>
+    <div class="kpi-tile accent-serious" data-kpi="missing">
+      <span class="kpi-label" data-i18n="kpiMissing">Invoices Not Sent</span>
+      <span class="kpi-value" id="kpiMissing">—</span>
+    </div>
+  </section>
+
+  <section class="insight-banner" id="insightBanner">
+    <div class="insight-icon">✦</div>
+    <div class="insight-body">
+      <div class="insight-headline" id="insightHeadline" data-i18n="insightLoading">Reading today's portfolio…</div>
+      <ul class="insight-bullets" id="insightBullets"></ul>
+    </div>
+    <span class="insight-source" id="insightSource"></span>
+  </section>
+
+  <section class="radar-section">
+    <div class="section-head">
+      <h2 data-i18n="radarTitle">AI Risk Radar</h2>
+      <span class="section-sub" data-i18n="radarSub">Companies needing attention first</span>
+    </div>
+    <div class="radar-track" id="radarTrack"></div>
+  </section>
+
+  <section class="ask-ai-hero" id="askAiPanel">
+    <div class="ask-ai-badge"><span class="sparkle">✦</span> <span data-i18n="askAiBadge">AI-Powered Search</span></div>
+    <div class="ask-ai-row">
+      <input type="text" id="askAiInput" data-i18n-placeholder="askAiPlaceholder" placeholder="e.g. who has overdue payments and renews this month?">
+      <button class="btn-primary" id="askAiSubmit" data-i18n="askAiSubmit" type="button">Ask</button>
+    </div>
+    <div class="ask-ai-answer" id="askAiAnswer"></div>
+  </section>
+
+  <section class="controls-row">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" width="16" height="16" class="search-icon"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search company, industry, contact…">
+    </div>
+
+    <div class="filter-chips" id="filterChips">
+      <select id="filterContract" class="chip-select" data-i18n-group="contractOptions"></select>
+      <select id="filterPayment" class="chip-select" data-i18n-group="paymentOptions"></select>
+      <select id="filterInvoice" class="chip-select" data-i18n-group="invoiceOptions"></select>
+    </div>
+
+    <button class="btn-ghost hidden" id="resetBtn" type="button">
+      <span>↺</span> <span data-i18n="resetFilters">Reset</span>
+    </button>
+    <button class="btn-ghost" id="exportBtn" type="button">
+      <span>⇩</span> <span data-i18n="exportCsv">Export CSV</span>
+    </button>
+    <button class="btn-primary" id="addRecordBtn" type="button">
+      <span>＋</span> <span data-i18n="addRecord">Add Record</span>
+    </button>
+  </section>
+
+  <section class="table-section">
+    <div class="table-scroll">
+      <table class="company-table" id="companyTable">
+        <thead>
+          <tr>
+            <th data-i18n="colCompany">Company</th>
+            <th data-i18n="colIndustry">Industry</th>
+            <th data-i18n="colContract">Contract</th>
+            <th data-i18n="colRenewal">Renewal Date</th>
+            <th data-i18n="colPayment">Payment</th>
+            <th data-i18n="colInvoice">Invoice Request</th>
+            <th data-i18n="colRisk">Risk</th>
+          </tr>
+        </thead>
+        <tbody id="companyTableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-empty hidden" id="tableEmpty">
+      <div id="tableEmptyText" data-i18n="noResults">No member companies match your search.</div>
+      <div class="suggest-row hidden" id="suggestRow"></div>
+    </div>
+    <div class="table-footer">
+      <div class="table-count" id="tableCount"></div>
+      <div class="pager-controls" id="pagerControls">
+        <label class="pager-size">
+          <span data-i18n="rowsPerPage">Rows per page</span>
+          <select id="pageSizeSelect">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+          </select>
+        </label>
+        <button class="btn-ghost" id="pagerPrev" type="button" data-i18n="pagerPrev">Prev</button>
+        <span class="pager-label" id="pagerLabel"></span>
+        <button class="btn-ghost" id="pagerNext" type="button" data-i18n="pagerNext">Next</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="analytics-section">
+    <div class="section-head">
+      <h2 data-i18n="analyticsTitle">Portfolio Analytics</h2>
+      <span class="section-sub" data-i18n="analyticsSub">Breakdown across all member companies</span>
+    </div>
+    <div class="analytics-grid">
+      <div class="chart-card">
+        <h3 data-i18n="chartContract">Contract Status</h3>
+        <div class="chart-body" id="chartContract"></div>
+      </div>
+      <div class="chart-card">
+        <h3 data-i18n="chartPayment">Payment Status</h3>
+        <div class="chart-body" id="chartPayment"></div>
+      </div>
+      <div class="chart-card">
+        <h3 data-i18n="chartInvoice">Invoice Requests</h3>
+        <div class="chart-body" id="chartInvoice"></div>
+      </div>
+      <div class="chart-card chart-card-wide">
+        <h3 data-i18n="chartRenewals">Upcoming Renewals by Month</h3>
+        <div class="chart-body" id="chartRenewals"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="segment-section">
+    <div class="section-head">
+      <h2 data-i18n="segmentTitle">Segmentation</h2>
+      <span class="section-sub" data-i18n="segmentSub">Risk by membership plan and industry</span>
+    </div>
+
+    <div class="insight-banner" id="segmentInsightBanner">
+      <div class="insight-icon">✦</div>
+      <div class="insight-body">
+        <div class="insight-headline" id="segmentInsightHeadline"></div>
+        <ul class="insight-bullets" id="segmentInsightBullets"></ul>
+      </div>
+      <span class="insight-source" id="segmentInsightSource"></span>
+    </div>
+
+    <div class="segment-grid">
+      <div class="chart-card">
+        <h3 data-i18n="byPlanTitle">By Membership Plan</h3>
+        <div class="plan-cards" id="planCards"></div>
+      </div>
+      <div class="chart-card">
+        <h3 data-i18n="byIndustryTitle">By Industry</h3>
+        <div class="industry-table-scroll">
+          <table class="segment-table" id="industryTable">
+            <thead>
+              <tr>
+                <th data-i18n="colIndustryName">Industry</th>
+                <th data-i18n="colTotalShort">Total</th>
+                <th data-i18n="colAtRiskShort">At Risk</th>
+                <th data-i18n="colOverdueShort">Late</th>
+                <th data-i18n="colMissingShort">Not Sent</th>
+              </tr>
+            </thead>
+            <tbody id="industryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    <span data-i18n="footerNote">Built for the Tokyo Land / Tokyu Fudosan Enterprise Challenge — local demo only.</span>
+  </footer>
+</main>
+
+<div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+<aside class="drawer hidden" id="drawer" aria-hidden="true">
+  <button class="drawer-close" id="drawerClose" aria-label="Close">✕</button>
+  <div class="drawer-content" id="drawerContent"></div>
+</aside>
+
+<div class="drawer-backdrop hidden" id="recordModalBackdrop"></div>
+<aside class="drawer record-modal hidden" id="recordModal" aria-hidden="true">
+  <button class="drawer-close" id="recordModalClose" aria-label="Close">✕</button>
+  <div class="drawer-content">
+    <div class="drawer-title" id="recordModalTitle"></div>
+    <form id="recordForm" class="record-form">
+      <label>
+        <span data-i18n="formName">Company name</span>
+        <input type="text" id="fName" required>
+      </label>
+      <label>
+        <span data-i18n="formNameKana">Japanese reading (name_kana)</span>
+        <input type="text" id="fNameKana">
+      </label>
+      <label>
+        <span data-i18n="formIndustry">Industry</span>
+        <input type="text" id="fIndustry" required>
+      </label>
+      <label>
+        <span data-i18n="formPlan">Membership plan</span>
+        <input type="text" id="fPlan" required>
+      </label>
+      <label>
+        <span data-i18n="formContactPerson">Contact person</span>
+        <input type="text" id="fContactPerson">
+      </label>
+      <label>
+        <span data-i18n="formContactEmail">Contact email</span>
+        <input type="email" id="fContactEmail">
+      </label>
+      <label>
+        <span data-i18n="formContactPhone">Contact phone</span>
+        <input type="text" id="fContactPhone">
+      </label>
+      <label>
+        <span data-i18n="formContractStatus">Contract status</span>
+        <select id="fContractStatus"></select>
+      </label>
+      <label>
+        <span data-i18n="formContractStart">Contract start date</span>
+        <input type="date" id="fContractStart" required>
+      </label>
+      <label>
+        <span data-i18n="formRenewalDate">Renewal date</span>
+        <input type="date" id="fRenewalDate" required>
+      </label>
+      <label>
+        <span data-i18n="formInvoiceStatus">Invoice request status</span>
+        <select id="fInvoiceStatus"></select>
+      </label>
+      <label>
+        <span data-i18n="formPaymentStatus">Payment status</span>
+        <select id="fPaymentStatus"></select>
+      </label>
+      <label>
+        <span data-i18n="formFee">Monthly fee (JPY)</span>
+        <input type="number" id="fFee" min="0" required>
+      </label>
+      <label class="record-form-full">
+        <span data-i18n="formNotes">Ops notes</span>
+        <textarea id="fNotes" rows="2"></textarea>
+      </label>
+      <div class="record-form-actions">
+        <button type="button" class="btn-ghost" id="recordFormCancel" data-i18n="formCancel">Cancel</button>
+        <button type="submit" class="btn-primary" data-i18n="formSave">Save record</button>
+      </div>
+    </form>
+  </div>
+</aside>
+
+<div class="drawer-backdrop hidden" id="helpModalBackdrop"></div>
+<aside class="drawer help-modal hidden" id="helpModal" aria-hidden="true">
+  <button class="drawer-close" id="helpModalClose" aria-label="Close">✕</button>
+  <div class="drawer-content">
+    <div class="drawer-title" id="helpModalTitle"></div>
+    <div id="helpModalBody"></div>
+  </div>
+</aside>
+
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

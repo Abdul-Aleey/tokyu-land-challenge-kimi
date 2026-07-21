@@ -1,0 +1,47 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/tokyu-member-console:$COMMIT_SHA'
+      - '-f'
+      - 'Dockerfile'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/tokyu-member-console:$COMMIT_SHA'
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'tokyu-member-console'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/tokyu-member-console:$COMMIT_SHA'
+      - '--region'
+      - 'asia-northeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '1'
+      # Pinned to 1: each instance keeps its own local SQLite copy of tokyu.db,
+      # synced to/from GCS around each request. Multiple instances writing back
+      # to the same GCS object independently could clobber each other's edits,
+      # so this stays single-instance until a proper multi-writer store
+      # (e.g. Cloud SQL) replaces this pattern.
+      - '--max-instances'
+      - '1'
+      - '--timeout'
+      - '60'
+      - '--set-env-vars'
+      - 'GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=asia-northeast1,GEMINI_MODEL=gemini-2.5-flash,DEMO_MODE=false,GCS_BUCKET_NAME=tokyu,GCS_DB_OBJECT_NAME=tokyu.db'
+
+images:
+  - 'gcr.io/$PROJECT_ID/tokyu-member-console:$COMMIT_SHA'
