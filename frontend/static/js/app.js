@@ -412,12 +412,12 @@ function paymentBadgeLevel(c) {
   return PAYMENT_BADGE[c.payment_status] || "neutral";
 }
 
-// Once a company has paid, the relevant date is when they paid (a few days
-// either side of when it was due) -- showing the far-off next cycle's due
-// date next to a "Paid" badge reads as a contradiction. Only an unpaid
-// company's next_payment_due (the date driving its risk) belongs here.
+// The date a company actually paid -- blank (formatDate renders "—") until
+// they have. The upcoming/overdue due date that drives risk still shows in
+// the drawer and the AI Risk Radar; this column is strictly "when did they
+// pay", so it's never populated for a Not Paid row.
 function paymentDateValue(c) {
-  return c.payment_status === "Paid" ? c.last_payment_date : c.next_payment_due;
+  return c.last_payment_date;
 }
 
 // Payment/invoice selects in the Add/Modify form only ever offer the raw
