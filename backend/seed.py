@@ -128,21 +128,27 @@ def _build_company(name: str, industry: str, plan: str, profile: str) -> dict:
     notes = ""
     contract_status = "Active"
 
-    if profile == "healthy":
-        # Renewal is comfortably far out and already paid.
-        renewal_date = _rand_date(30, 150)
-        payment_status = "Paid"
-        invoice_status = "Sent"
-        invoice_sent_date = renewal_date - timedelta(days=30)
-        last_payment = invoice_sent_date + timedelta(days=random.randint(2, 20))
+    if profile == "not_yet_billed":
+        # Renewal is more than a month out -- the invoice for this term
+        # cannot exist yet (it only goes out one month before renewal), so
+        # this company is necessarily still Not Sent / Not Paid. Nothing
+        # wrong here; it's just not due for billing yet.
+        renewal_date = _rand_date(31, 150)
+        payment_status = "Not Paid"
+        invoice_status = "Not Sent"
+        invoice_sent_date = None
+        last_payment = None
     elif profile == "renewal_soon_paid":
-        # Renewal is within the "renewals due" 30-day window, but already
+        # Renewal is within the "renewals due" 30-day window, and already
         # paid -- demonstrates that KPI without also showing as at-risk.
         renewal_date = _rand_date(4, 25)
         payment_status = "Paid"
         invoice_status = "Sent"
         invoice_sent_date = renewal_date - timedelta(days=30)
-        last_payment = invoice_sent_date + timedelta(days=random.randint(2, 20))
+        # Paid is a past-or-today fact -- clamp so it never lands after
+        # TODAY even though renewal_date itself is still in the future.
+        window_days = max(1, (TODAY - invoice_sent_date).days)
+        last_payment = invoice_sent_date + timedelta(days=random.randint(1, window_days))
     elif profile == "low_risk":
         # Renewal in the next 1-3 days, still unpaid -- Low.
         renewal_date = _rand_date(1, 3)
@@ -245,7 +251,7 @@ def seed() -> None:
     # 55 companies split across risk profiles so the dashboard opens with a
     # meaningful, non-trivial mix on first load.
     profiles = (
-        ["healthy"] * 20
+        ["not_yet_billed"] * 20
         + ["renewal_soon_paid"] * 9
         + ["low_risk"] * 5
         + ["high_risk"] * 3
