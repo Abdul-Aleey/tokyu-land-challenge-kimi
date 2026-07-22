@@ -701,30 +701,37 @@ function buildCompanyRow(c, onClick) {
   tr.appendChild(tdName);
 
   const tdIndustry = document.createElement("td");
+  tdIndustry.setAttribute("data-label", t("colIndustry"));
   tdIndustry.textContent = c.industry;
   tr.appendChild(tdIndustry);
 
   const tdContract = document.createElement("td");
+  tdContract.setAttribute("data-label", t("colContract"));
   tdContract.appendChild(badge(statusLabel(CONTRACT_KEYS, c.contract_status), CONTRACT_BADGE[c.contract_status] || "neutral"));
   tr.appendChild(tdContract);
 
   const tdRenewal = document.createElement("td");
+  tdRenewal.setAttribute("data-label", t("colRenewal"));
   tdRenewal.textContent = formatDate(c.renewal_date, state.lang);
   tr.appendChild(tdRenewal);
 
   const tdPayment = document.createElement("td");
+  tdPayment.setAttribute("data-label", t("colPayment"));
   tdPayment.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), paymentBadgeLevel(c)));
   tr.appendChild(tdPayment);
 
   const tdPaymentDue = document.createElement("td");
+  tdPaymentDue.setAttribute("data-label", t("colPaymentDue"));
   tdPaymentDue.textContent = formatDate(paymentDateValue(c), state.lang);
   tr.appendChild(tdPaymentDue);
 
   const tdInvoice = document.createElement("td");
+  tdInvoice.setAttribute("data-label", t("colInvoice"));
   tdInvoice.appendChild(badge(statusLabel(INVOICE_KEYS, c.invoice_request_status), INVOICE_BADGE[c.invoice_request_status] || "neutral"));
   tr.appendChild(tdInvoice);
 
   const tdRisk = document.createElement("td");
+  tdRisk.setAttribute("data-label", t("colRisk"));
   const pill = document.createElement("span");
   pill.className = `risk-pill badge-${RISK_BADGE[c.risk.level] || "neutral"}`;
   pill.textContent = statusLabel(RISK_KEYS, c.risk.level);

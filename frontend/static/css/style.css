@@ -702,5 +702,31 @@ button { font-family: inherit; }
   .kpi-row { grid-template-columns: repeat(2, 1fr); }
   .analytics-grid { grid-template-columns: 1fr; }
   .topbar { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
-  .company-table { font-size: 12px; }
+
+  /* Company table becomes a stack of cards -- a wide data table can't
+     reflow into a phone-width column, so each row turns into its own
+     card and each cell shows its column name as a label instead. */
+  .company-table { font-size: 13px; }
+  .company-table thead { display: none; }
+  .company-table, .company-table tbody, .company-table tr, .company-table td { display: block; width: 100%; }
+  .company-table tbody tr {
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    padding: 4px 14px;
+    background: var(--surface-solid);
+  }
+  .company-table td {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 8px 0; border-bottom: 1px dashed var(--border);
+  }
+  .company-table td:last-child { border-bottom: none; }
+  .company-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-muted); flex-shrink: 0;
+  }
+  .company-table td.cell-name {
+    display: block; padding: 10px 0; border-bottom: 1px solid var(--border-strong); font-size: 15px;
+  }
 }
