@@ -25,7 +25,7 @@ const I18N = {
     askAiSubmit: "Ask",
     askAiModeSingle: "Single Question", askAiModeSession: "Session", askAiNewSession: "New Session",
     colCompany: "Company", colIndustry: "Industry", colContract: "Contract",
-    colRenewal: "Renewal Date", colPayment: "Payment", colPaymentDue: "Payment Due", colInvoice: "Invoice Request", colRisk: "Risk",
+    colRenewal: "Renewal Date", colPayment: "Payment", colPaymentDue: "Payment Date", colInvoice: "Invoice Request", colRisk: "Risk",
     noResults: "No member companies match your search.",
     noResultsTypo: "No exact match for that search.",
     didYouMean: "Did you mean:",
@@ -136,7 +136,7 @@ const I18N = {
     askAiSubmit: "質問する",
     askAiModeSingle: "単発質問", askAiModeSession: "セッション", askAiNewSession: "新しいセッション",
     colCompany: "会社名", colIndustry: "業種", colContract: "契約状況",
-    colRenewal: "更新日", colPayment: "支払状況", colPaymentDue: "支払期日", colInvoice: "請求書対応", colRisk: "リスク",
+    colRenewal: "更新日", colPayment: "支払状況", colPaymentDue: "支払日", colInvoice: "請求書対応", colRisk: "リスク",
     noResults: "該当する会員企業がありません。",
     noResultsTypo: "完全に一致する結果は見つかりませんでした。",
     didYouMean: "もしかして:",
@@ -410,6 +410,14 @@ const RISK_BADGE = { "Critical": "critical", "High": "serious", "Medium": "warni
 function paymentBadgeLevel(c) {
   if (c.payment_status === "Not Paid" && c.risk && c.risk.level === "Critical") return "critical";
   return PAYMENT_BADGE[c.payment_status] || "neutral";
+}
+
+// Once a company has paid, the relevant date is when they paid (a few days
+// either side of when it was due) -- showing the far-off next cycle's due
+// date next to a "Paid" badge reads as a contradiction. Only an unpaid
+// company's next_payment_due (the date driving its risk) belongs here.
+function paymentDateValue(c) {
+  return c.payment_status === "Paid" ? c.last_payment_date : c.next_payment_due;
 }
 
 // Payment/invoice selects in the Add/Modify form only ever offer the raw
@@ -718,7 +726,7 @@ function buildCompanyRow(c, onClick) {
   tr.appendChild(tdPayment);
 
   const tdPaymentDue = document.createElement("td");
-  tdPaymentDue.textContent = formatDate(c.next_payment_due, state.lang);
+  tdPaymentDue.textContent = formatDate(paymentDateValue(c), state.lang);
   tr.appendChild(tdPaymentDue);
 
   const tdInvoice = document.createElement("td");
@@ -1692,7 +1700,7 @@ function exportCsv() {
     statusLabel(CONTRACT_KEYS, c.contract_status),
     formatDate(c.renewal_date, state.lang),
     statusLabel(PAYMENT_KEYS, c.payment_status),
-    formatDate(c.next_payment_due, state.lang),
+    formatDate(paymentDateValue(c), state.lang),
     statusLabel(INVOICE_KEYS, c.invoice_request_status),
     statusLabel(RISK_KEYS, c.risk.level),
   ]);

@@ -130,8 +130,10 @@ def _build_company(name: str, industry: str, plan: str, profile: str) -> dict:
     last_payment = None
     contract_status = "Active"
     # Contract renewal is independent of the monthly payment cycle by default;
-    # profiles that care about renewal proximity override this.
-    renewal_date = _rand_date(30, 400)
+    # profiles that care about renewal proximity override this. Kept within
+    # a year out so it never reads as an implausibly distant renewal next to
+    # a much sooner monthly payment due date.
+    renewal_date = _rand_date(30, 150)
 
     if profile == "healthy":
         payment_status = "Paid"

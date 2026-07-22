@@ -21,6 +21,7 @@ class CompanyOut(BaseModel):
     renewal_date: str
     payment_status: str
     effective_payment_status: str
+    last_payment_date: str | None
     next_payment_due: str
     invoice_request_status: str
     monthly_fee_jpy: int
@@ -41,7 +42,6 @@ class CompanyDetailOut(CompanyOut):
     contact_email: str | None
     contact_phone: str | None
     contract_start_date: str
-    last_payment_date: str | None
     invoice_sent_date: str | None
     notes: str | None
     timeline: list[ActivityEventOut]
