@@ -147,27 +147,30 @@ def _build_company(name: str, industry: str, plan: str, profile: str) -> dict:
         payment_status = random.choice(["Paid", "Not Paid"])
         invoice_status = "Sent"
         if payment_status == "Paid":
-            last_payment = _rand_date(-40, -5)
+            last_payment = _rand_date(-27, -5)
             invoice_sent_date = last_payment - timedelta(days=random.randint(1, 3))
             next_payment_due = last_payment + timedelta(days=30)
         else:
             invoice_sent_date = _rand_date(-25, -5)
             next_payment_due = _rand_date(5, 25)
     elif profile == "payment_risk":
-        # This month's payment is overdue and the invoice was sent -- the
-        # Critical risk tier (late payment on a real, issued invoice).
+        # Invoice was sent recently (within the last month, realistic net
+        # payment terms) and has since fallen overdue by a modest amount --
+        # the Critical risk tier, but a fresh lapse, not a months-old one
+        # nobody noticed.
         payment_status = "Not Paid"
         invoice_status = "Sent"
-        next_payment_due = _rand_date(-30, -1)
-        invoice_sent_date = next_payment_due - timedelta(days=random.randint(25, 35))
+        invoice_sent_date = _rand_date(-30, -23)
+        net_terms = random.randint(15, 20)  # invoice due N days after being sent
+        next_payment_due = invoice_sent_date + timedelta(days=net_terms)
         notes = "Finance flagged for follow-up call."
     elif profile == "payment_due_soon":
-        # Due today or within the next week, invoice already sent, payment
-        # hasn't come in yet -- High (due today) / Low (due within a week).
+        # Due today or within the next week, invoice sent within the last
+        # month -- High (due today) / Low (due within a week).
         payment_status = "Not Paid"
         invoice_status = "Sent"
         next_payment_due = _rand_date(0, 7)
-        invoice_sent_date = next_payment_due - timedelta(days=random.randint(25, 35))
+        invoice_sent_date = next_payment_due - timedelta(days=random.randint(15, 25))
         notes = "Payment due imminently; follow up before the due date."
     elif profile == "invoice_gap":
         # Invoice never sent -- can't be Paid, and never counts as risk no
@@ -188,17 +191,21 @@ def _build_company(name: str, industry: str, plan: str, profile: str) -> dict:
                 invoice_sent_date = last_payment - timedelta(days=random.randint(1, 3))
             next_payment_due = last_payment + timedelta(days=30)
         else:
-            # Half the time also behind on this month's fee -- an expired
-            # contract with an overdue, invoiced payment is doubly critical.
-            next_payment_due = _rand_date(-45, 30)
             if invoice_status == "Sent":
-                invoice_sent_date = next_payment_due - timedelta(days=random.randint(25, 35))
+                # Same "invoice sent within the last month" realism as the
+                # other overdue profiles -- an expired contract with an
+                # overdue, invoiced payment is doubly critical.
+                invoice_sent_date = _rand_date(-30, -23)
+                next_payment_due = invoice_sent_date + timedelta(days=random.randint(15, 20))
+            else:
+                next_payment_due = _rand_date(-30, 30)
         notes = "Contract lapsed; awaiting renewal decision."
     else:  # critical -- most overdue, invoice sent, top of the risk radar
         payment_status = "Not Paid"
         invoice_status = "Sent"
-        next_payment_due = _rand_date(-90, -31)
-        invoice_sent_date = next_payment_due - timedelta(days=random.randint(25, 35))
+        invoice_sent_date = _rand_date(-30, -28)
+        net_terms = random.randint(10, 15)  # shorter terms -> lapses earlier, more overdue
+        next_payment_due = invoice_sent_date + timedelta(days=net_terms)
         notes = "Multiple issues open -- prioritize outreach."
 
     return {

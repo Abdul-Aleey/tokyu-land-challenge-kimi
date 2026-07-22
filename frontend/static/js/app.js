@@ -25,7 +25,7 @@ const I18N = {
     askAiSubmit: "Ask",
     askAiModeSingle: "Single Question", askAiModeSession: "Session", askAiNewSession: "New Session",
     colCompany: "Company", colIndustry: "Industry", colContract: "Contract",
-    colRenewal: "Renewal Date", colPayment: "Payment", colInvoice: "Invoice Request", colRisk: "Risk",
+    colRenewal: "Renewal Date", colPayment: "Payment", colPaymentDue: "Payment Due", colInvoice: "Invoice Request", colRisk: "Risk",
     noResults: "No member companies match your search.",
     noResultsTypo: "No exact match for that search.",
     didYouMean: "Did you mean:",
@@ -136,7 +136,7 @@ const I18N = {
     askAiSubmit: "質問する",
     askAiModeSingle: "単発質問", askAiModeSession: "セッション", askAiNewSession: "新しいセッション",
     colCompany: "会社名", colIndustry: "業種", colContract: "契約状況",
-    colRenewal: "更新日", colPayment: "支払状況", colInvoice: "請求書対応", colRisk: "リスク",
+    colRenewal: "更新日", colPayment: "支払状況", colPaymentDue: "支払期日", colInvoice: "請求書対応", colRisk: "リスク",
     noResults: "該当する会員企業がありません。",
     noResultsTypo: "完全に一致する結果は見つかりませんでした。",
     didYouMean: "もしかして:",
@@ -716,6 +716,10 @@ function buildCompanyRow(c, onClick) {
   const tdPayment = document.createElement("td");
   tdPayment.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), paymentBadgeLevel(c)));
   tr.appendChild(tdPayment);
+
+  const tdPaymentDue = document.createElement("td");
+  tdPaymentDue.textContent = formatDate(c.next_payment_due, state.lang);
+  tr.appendChild(tdPaymentDue);
 
   const tdInvoice = document.createElement("td");
   tdInvoice.appendChild(badge(statusLabel(INVOICE_KEYS, c.invoice_request_status), INVOICE_BADGE[c.invoice_request_status] || "neutral"));
@@ -1682,12 +1686,13 @@ async function sendEmailNow(companyId) {
 
 /* ---------------------------- CSV export ---------------------------- */
 function exportCsv() {
-  const header = [t("colCompany"), t("colIndustry"), t("colContract"), t("colRenewal"), t("colPayment"), t("colInvoice"), t("colRisk")];
+  const header = [t("colCompany"), t("colIndustry"), t("colContract"), t("colRenewal"), t("colPayment"), t("colPaymentDue"), t("colInvoice"), t("colRisk")];
   const rows = state.companies.map((c) => [
     c.name, c.industry,
     statusLabel(CONTRACT_KEYS, c.contract_status),
     formatDate(c.renewal_date, state.lang),
     statusLabel(PAYMENT_KEYS, c.payment_status),
+    formatDate(c.next_payment_due, state.lang),
     statusLabel(INVOICE_KEYS, c.invoice_request_status),
     statusLabel(RISK_KEYS, c.risk.level),
   ]);
