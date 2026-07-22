@@ -109,68 +109,61 @@ def _contact() -> tuple[str, str, str]:
 
 
 def _build_company(name: str, industry: str, plan: str, profile: str) -> dict:
-    """Payment/invoice are now a strict two-value ground truth (Paid/Not Paid,
-    Sent/Not Sent) -- a company can never be Paid without its invoice being
-    Sent. "Late Payment" isn't set here at all: it's computed at read time
-    from (Not Paid + renewal_date already passed), which doubles as the
-    payment due date. Some profiles below deliberately put renewal_date in
-    the past alongside Not Paid so the dashboard opens with a few Late
-    Payment companies to demonstrate that."""
+    """Contract status is Active/Expired only. Payment/invoice are a strict
+    two-value ground truth (Paid/Not Paid, Sent/Not Sent) -- a company can
+    never be Paid without its invoice being Sent. "Late Payment" isn't set
+    here at all: it's computed at read time from (Not Paid + renewal_date
+    already passed). Risk (Critical/High/Low) additionally requires the
+    invoice to actually be Sent -- an unpaid company whose invoice was never
+    sent is a data-quality/ops issue, not a payment risk, so it's always
+    "None" regardless of how overdue the renewal date is. Profiles below are
+    picked so the seed demonstrates every combination on first load."""
     started = _rand_date(-900, -60)
     contact_person, contact_email, contact_phone = _contact()
     fee = random.choice([48000, 68000, 98000, 128000, 168000, 248000, 398000])
     notes = ""
     invoice_sent_date = None
     last_payment = None
+    contract_status = "Active"
 
     if profile == "healthy":
-        contract_status = "Active"
         renewal_date = _rand_date(120, 400)
         payment_status = "Paid"
         invoice_status = "Sent"
         invoice_sent_date = _rand_date(-40, -10)
         last_payment = _rand_date(-25, -2)
     elif profile == "renewal_due":
-        contract_status = "Pending Renewal"
-        renewal_date = _rand_date(3, 30)
+        renewal_date = _rand_date(4, 30)
         payment_status = random.choice(["Paid", "Not Paid"])
         invoice_status = "Sent"
         invoice_sent_date = _rand_date(-40, -10)
         if payment_status == "Paid":
             last_payment = _rand_date(-40, -5)
     elif profile == "payment_risk":
-        # Renewal date already passed but staff hasn't updated contract_status
-        # yet -- exactly the case "Late Payment" auto-detection is for.
-        contract_status = "Active"
+        # Renewal date already passed and the invoice was sent -- this is the
+        # Critical risk tier (late payment on a real, issued invoice).
         renewal_date = _rand_date(-25, -1)
         payment_status = "Not Paid"
-        invoice_status = random.choice(["Sent", "Not Sent"])
-        if invoice_status == "Sent":
-            invoice_sent_date = _rand_date(-60, -26)
+        invoice_status = "Sent"
+        invoice_sent_date = _rand_date(-60, -26)
         notes = "Finance flagged for follow-up call."
     elif profile == "payment_due_soon":
-        # Renewal date is today or within the next 3 days and payment hasn't
-        # come in yet -- demonstrates the High (due today) / Low (due in 1-3
-        # days) risk tiers, distinct from "payment_risk" (already overdue).
-        contract_status = "Pending Renewal"
+        # Renewal date is today or within the next 3 days, invoice already
+        # sent, payment hasn't come in yet -- High (due today) / Low (due in
+        # 1-3 days) risk tiers.
         renewal_date = _rand_date(0, 3)
         payment_status = "Not Paid"
-        invoice_status = random.choice(["Sent", "Not Sent"])
-        if invoice_status == "Sent":
-            invoice_sent_date = _rand_date(-20, -5)
+        invoice_status = "Sent"
+        invoice_sent_date = _rand_date(-20, -5)
         notes = "Payment due imminently; follow up before the renewal date."
     elif profile == "invoice_gap":
-        contract_status = "Active"
-        renewal_date = _rand_date(40, 250)
-        payment_status = "Not Paid"  # can't be Paid -- invoice hasn't been sent
-        invoice_status = "Not Sent"
-        notes = "Billing contact requested a reissued invoice; not yet sent."
-    elif profile == "critical":
-        contract_status = "Pending Renewal"
-        renewal_date = _rand_date(-14, -1)
+        # Invoice never sent -- can't be Paid, and never counts as risk no
+        # matter how overdue the renewal date looks, since there's no issued
+        # invoice to actually be late on.
+        renewal_date = _rand_date(-30, 250)
         payment_status = "Not Paid"
         invoice_status = "Not Sent"
-        notes = "Multiple issues open -- prioritize outreach."
+        notes = "Billing contact requested a reissued invoice; not yet sent."
     elif profile == "expired":
         contract_status = "Expired"
         renewal_date = _rand_date(-90, -5)
@@ -181,14 +174,12 @@ def _build_company(name: str, industry: str, plan: str, profile: str) -> dict:
         if payment_status == "Paid":
             last_payment = _rand_date(-120, -60)
         notes = "Contract lapsed; awaiting renewal decision."
-    else:  # cancelled
-        contract_status = "Cancelled"
-        renewal_date = _rand_date(-200, -30)
-        payment_status = "Paid"
+    else:  # critical -- most overdue, invoice sent, top of the risk radar
+        renewal_date = _rand_date(-60, -30)
+        payment_status = "Not Paid"
         invoice_status = "Sent"
-        invoice_sent_date = _rand_date(-210, -70)
-        last_payment = _rand_date(-200, -60)
-        notes = "Membership cancelled by member company."
+        invoice_sent_date = _rand_date(-90, -61)
+        notes = "Multiple issues open -- prioritize outreach."
 
     return {
         "name": name,
@@ -216,7 +207,7 @@ def _build_company(name: str, industry: str, plan: str, profile: str) -> dict:
 def _build_events(company_id: int, c: dict) -> list[tuple[str, str, str]]:
     events = [("start", c["_started"].isoformat(), EVENT_LOG["start"])]
 
-    if c["contract_status"] in ("Active", "Pending Renewal") and c["_started"] < TODAY - timedelta(days=365):
+    if c["contract_status"] == "Active" and c["_started"] < TODAY - timedelta(days=365):
         events.append(("renewed", (c["_started"] + timedelta(days=365)).isoformat(), EVENT_LOG["renewed"]))
 
     if c["last_payment_date"]:
@@ -231,7 +222,7 @@ def _build_events(company_id: int, c: dict) -> list[tuple[str, str, str]]:
     elif c["invoice_sent_date"]:
         events.append(("invoice_sent", c["invoice_sent_date"], EVENT_LOG["invoice_sent"]))
 
-    if c["contract_status"] == "Pending Renewal":
+    if c["contract_status"] == "Active" and 0 <= (c["_renewal"] - TODAY).days <= 30:
         events.append(("reminder", (TODAY - timedelta(days=random.randint(1, 5))).isoformat(), EVENT_LOG["reminder"]))
 
     if c["payment_status"] == "Not Paid" and c["_renewal"] < TODAY:
@@ -248,14 +239,13 @@ def seed() -> None:
     # 55 companies split across risk profiles so the dashboard opens with a
     # meaningful, non-trivial mix on first load.
     profiles = (
-        ["healthy"] * 22
+        ["healthy"] * 23
         + ["renewal_due"] * 6
         + ["payment_due_soon"] * 4
         + ["payment_risk"] * 8
         + ["invoice_gap"] * 6
         + ["critical"] * 5
         + ["expired"] * 3
-        + ["cancelled"] * 1
     )
     random.shuffle(profiles)
 

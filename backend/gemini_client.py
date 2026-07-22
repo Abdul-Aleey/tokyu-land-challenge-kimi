@@ -78,7 +78,11 @@ def _models_to_try() -> list[str]:
     return models
 
 
-def call_gemini(system_prompt: str, user_content: str, *, timeout: float = 30.0) -> dict:
+def call_gemini(system_prompt: str, user_content: str | list, *, timeout: float = 30.0) -> dict:
+    """user_content is either a single string (one-shot question) or a list of
+    {"role": "user"|"model", "parts": [{"text": ...}]} turns for a multi-turn
+    session -- passed straight through to the SDK's `contents` parameter,
+    which accepts both forms natively."""
     settings.require_gemini()
 
     config = types.GenerateContentConfig(

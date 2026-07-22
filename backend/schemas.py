@@ -51,6 +51,16 @@ class StatusUpdateRequest(BaseModel):
     invoice_request_status: str | None = None
 
 
+class SendEmailRequest(BaseModel):
+    script: str = Field(min_length=1)
+
+
+class SendEmailResponse(BaseModel):
+    sent: bool
+    to: str | None
+    timeline: list[ActivityEventOut]
+
+
 class CompanyWriteRequest(BaseModel):
     """Full create/modify payload -- every field staff can set from the Add/Modify form.
 
@@ -79,7 +89,6 @@ class CompanyWriteRequest(BaseModel):
 class AnalyticsSummary(BaseModel):
     total_companies: int
     active_contracts: int
-    pending_renewal: int
     renewals_due_30d: int
     payments_late: int
     payments_not_paid: int
@@ -112,9 +121,7 @@ class SegmentBucket(BaseModel):
     key: str
     total: int
     active: int
-    pending_renewal: int
     expired: int
-    cancelled: int
     payments_late: int
     invoices_not_sent: int
     at_risk_count: int

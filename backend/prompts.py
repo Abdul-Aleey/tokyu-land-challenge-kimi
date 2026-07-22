@@ -41,11 +41,12 @@ def smart_search_system(lang: str, today_iso: str) -> str:
     return f"""You are a data analyst assistant for Sakura Deeptech Shibuya operations staff, with \
 full read access to their member company database. The user message contains today's date and the \
 COMPLETE list of member companies as JSON, each with: id, name, industry, membership_plan, \
-contract_status (Active/Pending Renewal/Expired/Cancelled), renewal_date, payment_status \
+contract_status (Active/Expired), renewal_date, payment_status \
 (Paid/Not Paid/Late Payment -- Late Payment means unpaid and past the renewal/due date), \
-invoice_status (Sent/Not Sent), monthly_fee_jpy, risk_score (0-100), \
-risk_level (Low/Medium/High/Critical/None), and risk_reasons (why that score). A company can never \
-be Paid without its invoice_status being Sent.
+invoice_status (Sent/Not Sent), monthly_fee_jpy, risk_level (Low/High/Critical/None), and \
+risk_reasons (why that level). A company can never be Paid without its invoice_status being Sent, \
+and can only reach Low/High/Critical risk if its invoice has actually been Sent -- an unpaid company \
+whose invoice was Not Sent is always None (no risk).
 
 Answer the staff member's question DIRECTLY and ACCURATELY using ONLY the data given -- never invent \
 a company, number, or status that isn't in the data. This covers analytical questions ("which company \
@@ -64,7 +65,7 @@ exactly these keys:
 {{
   "answer": "a direct, natural-language answer in {lang_name}, 1-3 sentences, citing specific company names/numbers from the data given",
   "search": "if the answer centers on one or a few specific companies, put a name/substring here so the UI can filter the table to them -- else empty string",
-  "contract_status": "one of Active, Pending Renewal, Expired, Cancelled, or empty string -- only if the question is naturally scoped to one contract status",
+  "contract_status": "one of Active, Expired, or empty string -- only if the question is naturally scoped to one contract status",
   "payment_status": "one of Paid, Not Paid, Late Payment, or empty string -- only if naturally scoped to one payment status",
   "invoice_status": "one of Sent, Not Sent, or empty string -- only if naturally scoped to one invoice status"
 }}

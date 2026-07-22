@@ -8,7 +8,7 @@ _MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July",
               "August", "September", "October", "November", "December"]
 
 _STATUS_JA = {
-    "Active": "有効", "Pending Renewal": "更新手続き中", "Expired": "契約終了", "Cancelled": "解約済み",
+    "Active": "有効", "Expired": "契約終了",
     "Paid": "支払済み", "Not Paid": "未払い", "Late Payment": "支払遅延",
     "Sent": "送付済み", "Not Sent": "未送付",
 }

@@ -333,6 +333,19 @@ button { font-family: inherit; }
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.55; transform: scale(1.2); }
 }
+.ask-ai-mode { display: flex; gap: 8px; align-items: center; margin: 10px 0 4px; }
+.ask-ai-mode-btn {
+  font-size: 11.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--border-strong); background: var(--surface-solid);
+  color: var(--text-secondary); cursor: pointer;
+}
+.ask-ai-mode-btn.active {
+  background: linear-gradient(90deg, var(--accent-sakura), var(--accent-indigo));
+  color: #fff; border-color: transparent;
+}
+.ask-ai-turn { border-left: 2px solid var(--border-strong); padding-left: 10px; margin-bottom: 10px; }
+.ask-ai-turn .q { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 3px; }
+.ask-ai-turn .a { font-size: 13.5px; color: var(--text-primary); line-height: 1.5; }
 .ask-ai-row { display: flex; gap: 10px; align-items: center; }
 .ask-ai-row input {
   flex: 1;
@@ -570,6 +583,11 @@ button { font-family: inherit; }
 .ai-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .ai-card-head .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-gold); font-weight: 700; }
 .ai-script { font-size: 13.5px; line-height: 1.55; color: var(--text-primary); margin-bottom: 10px; }
+.email-script {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  background: var(--surface-solid); border: 1px solid var(--border-strong); color: var(--text-primary);
+  border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit; line-height: 1.5;
+}
 .ai-action { font-size: 12.5px; color: var(--text-secondary); border-top: 1px dashed var(--border-strong); padding-top: 8px; }
 .copy-btn {
   font-size: 11px; border: 1px solid var(--border-strong); background: var(--surface-solid);

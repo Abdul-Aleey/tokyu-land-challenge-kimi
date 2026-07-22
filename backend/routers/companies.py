@@ -14,12 +14,14 @@ from backend.schemas import (
     CompanyOut,
     CompanySuggestion,
     CompanyWriteRequest,
+    SendEmailRequest,
+    SendEmailResponse,
     StatusUpdateRequest,
 )
 
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
-VALID_CONTRACT = {"Active", "Pending Renewal", "Expired", "Cancelled"}
+VALID_CONTRACT = {"Active", "Expired"}
 VALID_PAYMENT = {"Paid", "Not Paid"}  # "Late Payment" is computed, never stored directly
 VALID_INVOICE = {"Sent", "Not Sent"}
 
@@ -258,3 +260,26 @@ def update_status(company_id: int, payload: StatusUpdateRequest):
         result = _fetch_detail(conn, company_id)
     upload_db()
     return result
+
+
+@router.post("/{company_id}/send-email", response_model=SendEmailResponse)
+def send_email(company_id: int, payload: SendEmailRequest):
+    """Demo-only: no real email is sent -- this just logs the (possibly
+    staff-edited) script to the activity timeline and reports success, so the
+    "Send Email" button in the drawer has something real to show for itself
+    without wiring up an actual mail provider."""
+    with db_session() as conn:
+        existing = conn.execute("SELECT contact_email FROM companies WHERE id = ?", (company_id,)).fetchone()
+        if existing is None:
+            raise HTTPException(404, "Company not found")
+
+        to_email = existing["contact_email"]
+        conn.execute(
+            "INSERT INTO activity_events (company_id, event_type, event_date, description) VALUES (?,?,?,?)",
+            (company_id, "email_sent", date.today().isoformat(), f"Email sent to {to_email or 'contact (no email on file)'}: {payload.script}"),
+        )
+        events = conn.execute(
+            "SELECT * FROM activity_events WHERE company_id = ? ORDER BY event_date DESC", (company_id,)
+        ).fetchall()
+    upload_db()
+    return SendEmailResponse(sent=True, to=to_email, timeline=[dict(e) for e in events])

@@ -37,17 +37,16 @@ def enrich_company(company: dict) -> dict:
 def compute_risk(company: dict) -> dict:
     """Risk is driven purely by payment status relative to the renewal date
     (which doubles as the payment due date), always computed relative to
-    today: Paid -> no risk. Not Paid and the due date has already passed
-    (i.e. effective status is "Late Payment") -> Critical. Not Paid and due
-    today -> High. Not Paid and due within the next 3 days -> Low. Not Paid
-    but due further out -> no risk yet. Cancelled contracts are excluded
-    entirely regardless of payment."""
-    if company["contract_status"] == "Cancelled":
-        return {"score": 0, "level": "None", "reasons": [], "days_to_renewal": None}
-
+    today: Paid -> no risk. An unpaid company can only reach Critical/High/Low
+    if its invoice has actually been Sent -- a company can't be "late" on an
+    invoice that was never sent, so Not Sent is always no risk regardless of
+    the date. Not Paid + invoice Sent + due date already passed (effective
+    status "Late Payment") -> Critical. Due today -> High. Due within the
+    next 3 days -> Low. Due further out -> no risk yet. The numeric score
+    exists only for internal sort order, never shown in the UI."""
     days_to_renewal = _days_until(company["renewal_date"])
 
-    if company["payment_status"] == "Paid":
+    if company["payment_status"] == "Paid" or company["invoice_request_status"] != "Sent":
         return {"score": 0, "level": "None", "reasons": [], "days_to_renewal": days_to_renewal}
 
     if company["payment_status"] == "Late Payment":

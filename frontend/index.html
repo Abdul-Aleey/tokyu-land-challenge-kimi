@@ -84,8 +84,13 @@
 
   <section class="ask-ai-hero" id="askAiPanel">
     <div class="ask-ai-badge"><span class="sparkle">✦</span> <span data-i18n="askAiBadge">AI-Powered Search</span></div>
+    <div class="ask-ai-mode">
+      <button type="button" class="ask-ai-mode-btn active" id="askAiModeSingle" data-i18n="askAiModeSingle">Single Question</button>
+      <button type="button" class="ask-ai-mode-btn" id="askAiModeSession" data-i18n="askAiModeSession">Session</button>
+      <button type="button" class="btn-ghost hidden" id="askAiNewSession" data-i18n="askAiNewSession">New Session</button>
+    </div>
     <div class="ask-ai-row">
-      <input type="text" id="askAiInput" data-i18n-placeholder="askAiPlaceholder" placeholder="e.g. who has overdue payments and renews this month?">
+      <input type="text" id="askAiInput" data-i18n-placeholder="askAiPlaceholder" placeholder="e.g. who has a late payment and renews this month?">
       <button class="btn-primary" id="askAiSubmit" data-i18n="askAiSubmit" type="button">Ask</button>
     </div>
     <div class="ask-ai-answer" id="askAiAnswer"></div>

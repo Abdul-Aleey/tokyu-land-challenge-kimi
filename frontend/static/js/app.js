@@ -23,6 +23,7 @@ const I18N = {
     rowsPerPage: "Rows per page", pagerPrev: "Prev", pagerNext: "Next",
     askAiPlaceholder: "e.g. who has a late payment and renews this month?",
     askAiSubmit: "Ask",
+    askAiModeSingle: "Single Question", askAiModeSession: "Session", askAiNewSession: "New Session",
     colCompany: "Company", colIndustry: "Industry", colContract: "Contract",
     colRenewal: "Renewal Date", colPayment: "Payment", colInvoice: "Invoice Request", colRisk: "Risk",
     noResults: "No member companies match your search.",
@@ -36,7 +37,7 @@ const I18N = {
     filterAllContract: "All contract statuses",
     filterAllPayment: "All payment statuses",
     filterAllInvoice: "All invoice statuses",
-    statusActive: "Active", statusPendingRenewal: "Pending Renewal", statusExpired: "Expired", statusCancelled: "Cancelled",
+    statusActive: "Active", statusExpired: "Expired",
     statusPaid: "Paid", statusNotPaid: "Not Paid", statusLatePayment: "Late Payment",
     statusSent: "Sent", statusNotSent: "Not Sent",
     riskCritical: "Critical", riskHigh: "High", riskMedium: "Medium", riskLow: "Low", riskNone: "—",
@@ -45,6 +46,8 @@ const I18N = {
     drawerEmail: "Email", drawerPhone: "Phone", drawerInvoiceSent: "Invoice Sent",
     aiCallScript: "Suggested call script", aiRecommended: "Recommended action",
     copy: "Copy", copied: "Copied!",
+    emailSectionTitle: "Email (demo)", sendEmail: "Send Email",
+    emailSentTo: "Email sent to", emailSentNoAddress: "Email sent (no address on file)",
     statusEditorTitle: "Update status", save: "Save changes", saved: "Status updated",
     timelineTitle: "Activity timeline",
     modifyRecord: "Modify record", deleteRecord: "Delete record", deleted: "Record deleted",
@@ -65,6 +68,7 @@ const I18N = {
     eventReminder: "Renewal reminder sent to primary contact",
     eventOverdueNotice: "Late payment notice sent",
     eventStatusUpdate: "Status manually updated by operations staff",
+    eventEmailSent: "Email sent to member company",
     legendDueSoon: "Due this month",
     legendDueMid: "Due in 2–3 months",
     legendDueLater: "Later",
@@ -128,6 +132,7 @@ const I18N = {
     rowsPerPage: "表示件数", pagerPrev: "前へ", pagerNext: "次へ",
     askAiPlaceholder: "例：支払いが遅延していて今月更新の会社は？",
     askAiSubmit: "質問する",
+    askAiModeSingle: "単発質問", askAiModeSession: "セッション", askAiNewSession: "新しいセッション",
     colCompany: "会社名", colIndustry: "業種", colContract: "契約状況",
     colRenewal: "更新日", colPayment: "支払状況", colInvoice: "請求書対応", colRisk: "リスク",
     noResults: "該当する会員企業がありません。",
@@ -141,7 +146,7 @@ const I18N = {
     filterAllContract: "すべての契約状況",
     filterAllPayment: "すべての支払状況",
     filterAllInvoice: "すべての請求書対応状況",
-    statusActive: "有効", statusPendingRenewal: "更新手続き中", statusExpired: "契約終了", statusCancelled: "解約済み",
+    statusActive: "有効", statusExpired: "契約終了",
     statusPaid: "支払済み", statusNotPaid: "未払い", statusLatePayment: "支払遅延",
     statusSent: "送付済み", statusNotSent: "未送付",
     riskCritical: "重大", riskHigh: "高", riskMedium: "中", riskLow: "低", riskNone: "—",
@@ -150,6 +155,8 @@ const I18N = {
     drawerEmail: "メールアドレス", drawerPhone: "電話番号", drawerInvoiceSent: "請求書送付日",
     aiCallScript: "応答スクリプト案", aiRecommended: "推奨アクション",
     copy: "コピー", copied: "コピーしました",
+    emailSectionTitle: "メール（デモ）", sendEmail: "メール送信",
+    emailSentTo: "メールを送信しました：", emailSentNoAddress: "メールを送信しました（登録アドレスなし）",
     statusEditorTitle: "ステータス更新", save: "保存する", saved: "ステータスを更新しました",
     timelineTitle: "アクティビティ履歴",
     modifyRecord: "編集する", deleteRecord: "削除する", deleted: "レコードを削除しました",
@@ -170,6 +177,7 @@ const I18N = {
     eventReminder: "担当者へ更新リマインダーを送付しました",
     eventOverdueNotice: "支払い遅延の通知を送付しました",
     eventStatusUpdate: "運営スタッフがステータスを手動更新しました",
+    eventEmailSent: "会員企業へメールを送信しました",
     legendDueSoon: "今月中",
     legendDueMid: "2〜3ヶ月以内",
     legendDueLater: "それ以降",
@@ -223,13 +231,16 @@ const HELP_GUIDE = {
         p: [],
         items: [
           "Type in the search box to match company name, industry, or contact person.",
-          "Use the contract / payment / invoice dropdowns to narrow the table to one status.",
-          "A \"Reset\" button appears whenever a search, filter, or Ask AI question is active — one click clears everything.",
+          "Use the contract, payment, or invoice dropdowns to narrow the table to one status.",
+          "A \"Reset\" button appears whenever a search, filter, or Ask AI question is active. One click clears everything.",
         ],
       },
       {
         h: "Ask AI",
-        p: ["Type a question in plain language and click Ask. It answers directly (in whichever language you're using) and, when relevant, also filters the table to the companies it's talking about — for example \"which company is at highest risk?\" or \"how many companies have a late payment?\"."],
+        p: [
+          "Type a question in plain language and click Ask. It answers directly, in whichever language you're using, and when relevant also filters the table to the companies it's talking about. For example, \"which company is at highest risk?\" or \"how many companies have a late payment?\".",
+          "Choose \"Single Question\" for a one-off lookup, or switch to \"Session\" to ask follow-up questions with memory of what you already asked (e.g. \"and which of those renews soonest?\"). Click \"New Session\" any time to start a fresh conversation.",
+        ],
         items: [],
       },
       {
@@ -239,7 +250,7 @@ const HELP_GUIDE = {
       },
       {
         h: "Company details",
-        p: ["Click any row to open its full details, including contact email, phone, invoice-sent date, and payment date — these only appear here, not in the list, and payment date only shows once the company has actually been paid."],
+        p: ["Click any row to open its full details, including contact email, phone, invoice sent date, and payment date. These only appear here, not in the list, and payment date only shows once the company has actually been paid."],
         items: [],
       },
       {
@@ -247,34 +258,39 @@ const HELP_GUIDE = {
         p: [],
         items: [
           "A company can never be marked Paid until its invoice has been marked Sent.",
-          "\"Late Payment\" appears automatically once a company is unpaid past its renewal date — it's never set by hand.",
-          "Risk level follows payment timing: Critical (unpaid, past renewal date), High (unpaid, due today), Low (unpaid, due within 3 days), otherwise no risk.",
+          "\"Late Payment\" appears automatically once a company is unpaid past its renewal date. It's never set by hand.",
+          "Risk level follows payment timing, and only applies once an invoice has actually been Sent: Critical (unpaid, past renewal date), High (unpaid, due today), Low (unpaid, due within 3 days), otherwise no risk. An unpaid company whose invoice hasn't been sent yet is never flagged as risk, since there's no issued invoice to be late on.",
         ],
       },
       {
         h: "Update, add, modify, delete",
         p: [],
         items: [
-          "Inside a company's details, use \"Update status\" for a quick contract/payment/invoice change.",
+          "Inside a company's details, use \"Update status\" for a quick contract, payment, or invoice change.",
           "\"Modify record\" opens the full edit form for every field on that company.",
-          "\"+ Add Record\" (above the table) creates a brand-new company.",
+          "\"Add Record\" above the table creates a brand new company.",
           "\"Delete record\" permanently removes a company and its activity history.",
           "Every change is logged to that company's activity timeline.",
         ],
       },
       {
+        h: "Email (demo)",
+        p: ["Inside a company's details, the Email box is pre-filled with the AI call script and can be edited freely. \"Send Email\" is a showcase action only, no real email is sent, but it logs the send to the activity timeline so it behaves like part of a real workflow."],
+        items: [],
+      },
+      {
         h: "Table & pagination",
-        p: ["Choose 10, 25, or 50 rows per page and use Prev/Next to page through the list. \"Export CSV\" downloads exactly what's currently shown (search/filters applied)."],
+        p: ["Choose 10, 25, or 50 rows per page and use Prev/Next to page through the list. \"Export CSV\" downloads exactly what's currently shown, with search and filters applied, and Japanese characters export correctly for Excel."],
         items: [],
       },
       {
         h: "Analytics & segmentation",
-        p: ["Below the table, Portfolio Analytics breaks down contract/payment/invoice status and upcoming renewals by month; Segmentation shows the same risk picture grouped by membership plan and industry."],
+        p: ["Below the table, Portfolio Analytics breaks down contract, payment, and invoice status plus upcoming renewals by month. Segmentation shows the same risk picture grouped by membership plan and industry."],
         items: [],
       },
       {
         h: "Language, theme & AI status",
-        p: ["Toggle EN/日本語 and light/dark from the top bar. The badge next to the clock shows whether AI answers are live (\"Model Connected\") or using the rule-based fallback (\"Fallback Mode\" / \"Demo Mode\")."],
+        p: ["Toggle EN/日本語 and light/dark from the top bar. The badge next to the clock shows whether AI answers are live (\"Model Connected\", with the model name) or using the rule-based fallback (\"Fallback Mode\" or \"Demo Mode\")."],
         items: [],
       },
     ],
@@ -286,14 +302,17 @@ const HELP_GUIDE = {
         h: "検索・フィルター",
         p: [],
         items: [
-          "検索欄に入力すると、会社名・業種・担当者名で絞り込めます。",
-          "契約・支払・請求書のドロップダウンで、特定のステータスに絞り込めます。",
+          "検索欄に入力すると、会社名、業種、担当者名で絞り込めます。",
+          "契約、支払、請求書のドロップダウンで、特定のステータスに絞り込めます。",
           "検索やフィルター、AI検索が使われているときは「リセット」ボタンが表示され、ワンクリックで全て解除できます。",
         ],
       },
       {
         h: "AI検索",
-        p: ["自然な文章で質問を入力して「質問する」を押すと、その場で直接回答します（表示言語で回答）。関連する会社があれば、表の絞り込みも自動で行われます。例：「最もリスクが高い会社は？」「支払いが遅延している会社は何社？」など。"],
+        p: [
+          "自然な文章で質問を入力して「質問する」を押すと、その場で直接回答します（表示言語で回答）。関連する会社があれば、表の絞り込みも自動で行われます。例：「最もリスクが高い会社は？」「支払いが遅延している会社は何社？」など。",
+          "1回限りの質問には「単発質問」を、直前のやり取りを踏まえて続けて質問したい場合は「セッション」を選んでください（例：「その中で一番早く更新を迎えるのは？」）。「新しいセッション」でいつでも会話をリセットできます。",
+        ],
         items: [],
       },
       {
@@ -303,7 +322,7 @@ const HELP_GUIDE = {
       },
       {
         h: "会社詳細",
-        p: ["行をクリックすると詳細が開き、担当者メール・電話番号・請求書送付日・支払日が表示されます。これらは詳細画面でのみ表示され、支払日は実際に支払いが完了している場合のみ表示されます。"],
+        p: ["行をクリックすると詳細が開き、担当者メール、電話番号、請求書送付日、支払日が表示されます。これらは詳細画面でのみ表示され、支払日は実際に支払いが完了している場合のみ表示されます。"],
         items: [],
       },
       {
@@ -312,45 +331,50 @@ const HELP_GUIDE = {
         items: [
           "請求書が「送付済み」になるまで、支払いステータスを「支払済み」にすることはできません。",
           "「支払遅延」は、未払いのまま更新日を過ぎると自動的に表示されます（手動設定はしません）。",
-          "リスクレベルは支払いのタイミングで決まります：重大（未払いで更新日超過）、高（未払いで本日が期日）、低（未払いで期日まで3日以内）、それ以外はリスクなし。",
+          "リスクレベルは支払いのタイミングで決まり、請求書が実際に「送付済み」の場合のみ適用されます。重大（未払いで更新日超過）、高（未払いで本日が期日）、低（未払いで期日まで3日以内）、それ以外はリスクなしです。請求書が未送付の会社は、どれだけ更新日を過ぎていてもリスクとして表示されません。",
         ],
       },
       {
         h: "更新・新規登録・編集・削除",
         p: [],
         items: [
-          "詳細画面の「ステータス更新」で、契約・支払・請求書のステータスをすばやく変更できます。",
+          "詳細画面の「ステータス更新」で、契約、支払、請求書のステータスをすばやく変更できます。",
           "「編集する」では、その会社のすべての項目を編集できます。",
-          "表の上にある「＋新規登録」で新しい会社を登録できます。",
+          "表の上にある「新規登録」で新しい会社を登録できます。",
           "「削除する」で会社とその活動履歴を完全に削除します。",
           "変更内容はすべてその会社のアクティビティ履歴に記録されます。",
         ],
       },
       {
+        h: "メール（デモ）",
+        p: ["詳細画面のメール欄には、AIの応答スクリプト案があらかじめ入力されており、自由に編集できます。「メール送信」はあくまでデモ用の操作で、実際にメールは送信されませんが、アクティビティ履歴には送信記録として残ります。"],
+        items: [],
+      },
+      {
         h: "表とページ表示",
-        p: ["表示件数は10・25・50件から選べ、「前へ」「次へ」でページを送れます。「CSV出力」は現在表示中の内容（検索・フィルター適用後）をそのまま出力します。"],
+        p: ["表示件数は10、25、50件から選べ、「前へ」「次へ」でページを送れます。「CSV出力」は現在表示中の内容（検索・フィルター適用後）をそのまま出力し、日本語もExcelで正しく表示されます。"],
         items: [],
       },
       {
         h: "分析・セグメント",
-        p: ["表の下にある「ポートフォリオ分析」では契約・支払・請求書ステータスの内訳と月別更新予定を、「セグメント分析」ではプラン別・業種別の同じリスク傾向を確認できます。"],
+        p: ["表の下にある「ポートフォリオ分析」では契約、支払、請求書ステータスの内訳と月別更新予定を、「セグメント分析」ではプラン別、業種別の同じリスク傾向を確認できます。"],
         items: [],
       },
       {
         h: "言語・テーマ・AI接続状況",
-        p: ["上部バーでEN/日本語と、ライト/ダークテーマを切り替えられます。時計の隣のバッジは、AIの回答がリアルタイム（「モデル接続中」）かルールベースのフォールバック（「フォールバックモード」「デモモード」）かを示します。"],
+        p: ["上部バーでEN/日本語と、ライト/ダークテーマを切り替えられます。時計の隣のバッジは、AIの回答がリアルタイムか（「モデル接続中」、モデル名も表示）、ルールベースのフォールバックか（「フォールバックモード」「デモモード」）を示します。"],
         items: [],
       },
     ],
   },
 };
 
-const CONTRACT_KEYS = { "Active": "statusActive", "Pending Renewal": "statusPendingRenewal", "Expired": "statusExpired", "Cancelled": "statusCancelled" };
+const CONTRACT_KEYS = { "Active": "statusActive", "Expired": "statusExpired" };
 const PAYMENT_KEYS = { "Paid": "statusPaid", "Not Paid": "statusNotPaid", "Late Payment": "statusLatePayment" };
 const INVOICE_KEYS = { "Sent": "statusSent", "Not Sent": "statusNotSent" };
 const RISK_KEYS = { "Critical": "riskCritical", "High": "riskHigh", "Medium": "riskMedium", "Low": "riskLow", "None": "riskNone" };
 
-const CONTRACT_BADGE = { "Active": "good", "Pending Renewal": "warning", "Expired": "serious", "Cancelled": "neutral" };
+const CONTRACT_BADGE = { "Active": "good", "Expired": "serious" };
 const PAYMENT_BADGE = { "Paid": "good", "Not Paid": "warning", "Late Payment": "critical" };
 const INVOICE_BADGE = { "Sent": "good", "Not Sent": "serious" };
 const RISK_BADGE = { "Critical": "critical", "High": "serious", "Medium": "warning", "Low": "good", "None": "neutral" };
@@ -364,6 +388,7 @@ const EVENT_KEYS = {
   start: "eventStart", renewed: "eventRenewed", payment: "eventPayment",
   invoice_sent: "eventInvoiceSent", invoice_requested: "eventInvoiceRequested",
   reminder: "eventReminder", overdue_notice: "eventOverdueNotice", status_update: "eventStatusUpdate",
+  email_sent: "eventEmailSent",
 };
 
 const state = {
@@ -379,6 +404,8 @@ const state = {
   companies: [],
   drawerCompanyId: null,
   modelStatus: null,
+  askAiMode: "single",
+  askAiHistory: [],
 };
 
 function t(key) {
@@ -663,7 +690,7 @@ function renderTable(companies, totalCount) {
     const tdRisk = document.createElement("td");
     const pill = document.createElement("span");
     pill.className = `risk-pill badge-${RISK_BADGE[c.risk.level] || "neutral"}`;
-    pill.textContent = `${statusLabel(RISK_KEYS, c.risk.level)}${c.risk.level !== "None" ? " · " + c.risk.score : ""}`;
+    pill.textContent = statusLabel(RISK_KEYS, c.risk.level);
     tdRisk.appendChild(pill);
     tr.appendChild(tdRisk);
 
@@ -721,7 +748,7 @@ function renderCharts() {
   if (!state.summary) return;
   const s = state.summary;
 
-  const contractColors = { "Active": "var(--status-good)", "Pending Renewal": "var(--status-warning)", "Expired": "var(--status-serious)", "Cancelled": "var(--status-neutral)" };
+  const contractColors = { "Active": "var(--status-good)", "Expired": "var(--status-serious)" };
   const paymentColors = { "Paid": "var(--status-good)", "Not Paid": "var(--status-warning)", "Late Payment": "var(--status-critical)" };
   const invoiceColors = { "Sent": "var(--status-good)", "Not Sent": "var(--status-serious)" };
 
@@ -1092,6 +1119,14 @@ function renderDrawer(c) {
   activeLoaders.brief = createLoader("briefLoadingSteps");
   document.getElementById("aiScriptText").appendChild(activeLoaders.brief);
 
+  const emailCard = document.createElement("div");
+  emailCard.className = "ai-card";
+  emailCard.innerHTML = `<div class="ai-card-head"><span class="label">${t("emailSectionTitle")}</span></div>
+    <textarea class="email-script" id="emailScriptText" rows="5"></textarea>
+    <button class="btn-primary" id="sendEmailBtn" style="margin-top:8px;" type="button">${t("sendEmail")}</button>`;
+  content.appendChild(emailCard);
+  document.getElementById("sendEmailBtn").addEventListener("click", () => sendEmailNow(c.id));
+
   const info = document.createElement("div");
   info.className = "info-grid";
   const items = [
@@ -1421,10 +1456,31 @@ async function loadBrief(c) {
     action.after(copyBtn);
 
     if (sourceEl) sourceEl.textContent = brief.source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
+
+    const emailEl = document.getElementById("emailScriptText");
+    if (emailEl && !emailEl.value) emailEl.value = brief.call_script;
   } catch (e) {
     stopLoader("brief");
     const scriptEl = document.getElementById("aiScriptText");
     if (scriptEl) scriptEl.textContent = t("insightUnavailable");
+  }
+}
+
+async function sendEmailNow(companyId) {
+  const textarea = document.getElementById("emailScriptText");
+  const script = textarea ? textarea.value.trim() : "";
+  if (!script) return;
+
+  const btn = document.getElementById("sendEmailBtn");
+  btn.disabled = true;
+  try {
+    const result = await api(`/api/companies/${companyId}/send-email`, { method: "POST", body: JSON.stringify({ script }) });
+    toast(result.to ? `${t("emailSentTo")} ${result.to}` : t("emailSentNoAddress"));
+    if (state.drawerCompanyId === companyId) openDrawer(companyId);
+  } catch (e) {
+    toast(e.detail || t("fetchError"));
+  } finally {
+    btn.disabled = false;
   }
 }
 
@@ -1452,21 +1508,72 @@ function exportCsv() {
 }
 
 /* ---------------------------- ask AI ---------------------------- */
+function setAskAiMode(mode) {
+  state.askAiMode = mode;
+  state.askAiHistory = [];
+  document.getElementById("askAiModeSingle").classList.toggle("active", mode === "single");
+  document.getElementById("askAiModeSession").classList.toggle("active", mode === "session");
+  document.getElementById("askAiNewSession").classList.toggle("hidden", mode !== "session");
+  document.getElementById("askAiAnswer").innerHTML = "";
+}
+
+function renderAskAiSource(container, source) {
+  if (!source) return;
+  const tag = document.createElement("span");
+  tag.style.marginLeft = "8px";
+  tag.style.fontSize = "10px";
+  tag.style.color = "var(--text-muted)";
+  tag.style.textTransform = "uppercase";
+  tag.style.letterSpacing = "0.05em";
+  tag.textContent = source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
+  container.appendChild(tag);
+}
+
+function renderAskAiSession() {
+  const answerEl = document.getElementById("askAiAnswer");
+  answerEl.innerHTML = "";
+  state.askAiHistory.forEach((turn) => {
+    const wrap = document.createElement("div");
+    wrap.className = "ask-ai-turn";
+    const q = document.createElement("div");
+    q.className = "q";
+    q.textContent = turn.question;
+    const a = document.createElement("div");
+    a.className = "a";
+    a.textContent = turn.answer;
+    renderAskAiSource(a, turn.source);
+    wrap.appendChild(q);
+    wrap.appendChild(a);
+    answerEl.appendChild(wrap);
+  });
+}
+
 async function submitAskAi() {
   const q = document.getElementById("askAiInput").value.trim();
   if (!q) return;
 
   const submitBtn = document.getElementById("askAiSubmit");
   const answerEl = document.getElementById("askAiAnswer");
+  const isSession = state.askAiMode === "session";
   submitBtn.disabled = true;
   submitBtn.classList.add("is-loading");
-  answerEl.innerHTML = "";
+  if (!isSession) answerEl.innerHTML = "";
   stopLoader("askAi");
   activeLoaders.askAi = createLoader("askAiLoadingSteps");
-  answerEl.appendChild(activeLoaders.askAi);
+  if (isSession) {
+    const loaderRow = document.createElement("div");
+    loaderRow.appendChild(activeLoaders.askAi);
+    answerEl.appendChild(loaderRow);
+  } else {
+    answerEl.appendChild(activeLoaders.askAi);
+  }
 
   try {
-    const result = await api(`/api/ai/smart-search?lang=${state.lang}`, { method: "POST", body: JSON.stringify({ question: q }) });
+    const body = { question: q };
+    if (isSession && state.askAiHistory.length) {
+      body.history = state.askAiHistory.map((t) => ({ question: t.question, answer: t.answer }));
+    }
+    const result = await api(`/api/ai/smart-search?lang=${state.lang}`, { method: "POST", body: JSON.stringify(body) });
     document.getElementById("searchInput").value = result.search || "";
     document.getElementById("filterContract").value = result.contract_status || "";
     document.getElementById("filterPayment").value = result.payment_status || "";
@@ -1477,24 +1584,22 @@ async function submitAskAi() {
     state.filters.invoice_status = result.invoice_status || "";
     state.pagination.page = 1;
     stopLoader("askAi");
-    answerEl.innerHTML = "";
-    const answerText = document.createElement("span");
-    answerText.textContent = result.answer || "";
-    answerEl.appendChild(answerText);
-    if (result.source) {
-      const tag = document.createElement("span");
-      tag.style.marginLeft = "8px";
-      tag.style.fontSize = "10px";
-      tag.style.color = "var(--text-muted)";
-      tag.style.textTransform = "uppercase";
-      tag.style.letterSpacing = "0.05em";
-      tag.textContent = result.source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
-      answerEl.appendChild(tag);
+
+    if (isSession) {
+      state.askAiHistory.push({ question: q, answer: result.answer || "", source: result.source });
+      renderAskAiSession();
+      document.getElementById("askAiInput").value = "";
+    } else {
+      answerEl.innerHTML = "";
+      const answerText = document.createElement("span");
+      answerText.textContent = result.answer || "";
+      answerEl.appendChild(answerText);
+      renderAskAiSource(answerEl, result.source);
     }
     await loadTable();
   } catch (e) {
     stopLoader("askAi");
-    answerEl.textContent = "";
+    if (!isSession) answerEl.textContent = "";
     toast(t("fetchError"));
   } finally {
     submitBtn.disabled = false;
@@ -1603,6 +1708,9 @@ function initEvents() {
   document.getElementById("askAiInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") submitAskAi();
   });
+  document.getElementById("askAiModeSingle").addEventListener("click", () => setAskAiMode("single"));
+  document.getElementById("askAiModeSession").addEventListener("click", () => setAskAiMode("session"));
+  document.getElementById("askAiNewSession").addEventListener("click", () => setAskAiMode("session"));
 
   document.getElementById("exportBtn").addEventListener("click", exportCsv);
 

@@ -16,8 +16,14 @@ from backend.routers.analytics import segmentation as get_segmentation
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 
+class SmartSearchTurn(BaseModel):
+    question: str
+    answer: str
+
+
 class SmartSearchRequest(BaseModel):
     question: str
+    history: list[SmartSearchTurn] = []
 
 
 def _all_companies_with_risk() -> list[dict]:
@@ -49,7 +55,7 @@ def portfolio_insights(lang: str = "en"):
     renewals_due_30d = sum(
         1
         for c in companies
-        if c["contract_status"] in ("Active", "Pending Renewal")
+        if c["contract_status"] == "Active"
         and c["risk"]["days_to_renewal"] is not None
         and 0 <= c["risk"]["days_to_renewal"] <= 30
     )
@@ -67,7 +73,8 @@ def portfolio_insights(lang: str = "en"):
 @router.post("/smart-search")
 def smart_search(payload: SmartSearchRequest, lang: str = "en"):
     companies = _all_companies_with_risk()
-    return answer_question(payload.question, companies, lang=lang)
+    history = [t.model_dump() for t in payload.history]
+    return answer_question(payload.question, companies, lang=lang, history=history)
 
 
 @router.post("/segment-insights")

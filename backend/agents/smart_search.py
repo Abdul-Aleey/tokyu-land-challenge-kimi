@@ -13,9 +13,7 @@ _KEYWORDS = [
     (("late payment", "late", "支払い遅延", "延滞", "滞納"), "payment_status", "payment_status", "Late Payment"),
     (("not paid", "unpaid", "未払い"), "payment_status", "payment_status", "Not Paid"),
     (("paid", "支払済み", "支払完了"), "payment_status", "payment_status", "Paid"),
-    (("pending renewal", "renewing", "renew soon", "更新手続き中", "更新予定"), "contract_status", "contract_status", "Pending Renewal"),
     (("expired", "契約終了"), "contract_status", "contract_status", "Expired"),
-    (("cancelled", "canceled", "解約"), "contract_status", "contract_status", "Cancelled"),
     (("active", "有効"), "contract_status", "contract_status", "Active"),
     (("invoice not sent", "not sent", "未送付", "未対応"), "invoice_request_status", "invoice_status", "Not Sent"),
     (("invoice sent", "送付済み"), "invoice_request_status", "invoice_status", "Sent"),
@@ -68,10 +66,10 @@ def _fallback(question: str, companies: list[dict], lang: str) -> dict:
             reasons = [translate_reason(r, lang) for r in top["risk"]["reasons"]]
             if lang == "ja":
                 reason_text = "、".join(reasons) if reasons else "特筆すべき要因はありません"
-                answer = f"現在最もリスクが高いのは「{top['name']}」です（リスクスコア{top['risk']['score']}、{top['risk']['level']}）。理由: {reason_text}。"
+                answer = f"現在最もリスクが高いのは「{top['name']}」です（{top['risk']['level']}）。理由: {reason_text}。"
             else:
                 reason_text = ", ".join(reasons) if reasons else "no specific factors flagged"
-                answer = f"{top['name']} currently has the highest risk (score {top['risk']['score']}, {top['risk']['level']}) -- {reason_text}."
+                answer = f"{top['name']} currently has the highest risk ({top['risk']['level']}) -- {reason_text}."
             return {"answer": answer, **_EMPTY_FILTERS, "search": top["name"]}
 
     # 2) sum/average/etc -- the rule engine can't compute this even if a status word
@@ -128,7 +126,13 @@ def _ai_needed(lang: str) -> dict:
     return {"answer": answer, **_EMPTY_FILTERS}
 
 
-def answer_question(question: str, companies: list[dict], lang: str = "en") -> dict:
+def answer_question(question: str, companies: list[dict], lang: str = "en", history: list[dict] | None = None) -> dict:
+    """history, when present, is a list of {"question": ..., "answer": ...} prior
+    turns from the same Ask AI session -- used so Gemini can handle follow-up
+    questions ("and which one of those is at highest risk?") with context from
+    earlier in the conversation. The full company dataset is only sent once,
+    on the current turn, so it's always fresh -- not repeated (and going
+    stale) on every historical turn."""
     try:
         settings.require_gemini()
         if settings.demo_mode:
@@ -146,14 +150,24 @@ def answer_question(question: str, companies: list[dict], lang: str = "en") -> d
                 "payment_status": c["payment_status"],
                 "invoice_status": c["invoice_request_status"],
                 "monthly_fee_jpy": c["monthly_fee_jpy"],
-                "risk_score": c["risk"]["score"],
                 "risk_level": c["risk"]["level"],
                 "risk_reasons": c["risk"]["reasons"],
             }
             for c in companies
         ]
         payload = {"question": question, "companies": companies_context}
-        result = call_gemini(system, json.dumps(payload, ensure_ascii=False))
+
+        if history:
+            turns = []
+            for turn in history:
+                turns.append({"role": "user", "parts": [{"text": turn.get("question", "")}]})
+                turns.append({"role": "model", "parts": [{"text": json.dumps({"answer": turn.get("answer", "")}, ensure_ascii=False)}]})
+            turns.append({"role": "user", "parts": [{"text": json.dumps(payload, ensure_ascii=False)}]})
+            user_content = turns
+        else:
+            user_content = json.dumps(payload, ensure_ascii=False)
+
+        result = call_gemini(system, user_content)
         if "answer" not in result:
             raise GeminiAPIError("Gemini response missing 'answer' key")
         filters = {

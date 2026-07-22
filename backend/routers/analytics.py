@@ -33,7 +33,7 @@ def summary():
     renewals_due_30d = sum(
         1
         for c in companies
-        if c["contract_status"] in ("Active", "Pending Renewal")
+        if c["contract_status"] == "Active"
         and c["risk"]["days_to_renewal"] is not None
         and 0 <= c["risk"]["days_to_renewal"] <= 30
     )
@@ -42,7 +42,6 @@ def summary():
     return AnalyticsSummary(
         total_companies=len(companies),
         active_contracts=contract_ct.get("Active", 0),
-        pending_renewal=contract_ct.get("Pending Renewal", 0),
         renewals_due_30d=renewals_due_30d,
         payments_late=payment_ct.get("Late Payment", 0),
         payments_not_paid=payment_ct.get("Not Paid", 0),
@@ -70,8 +69,6 @@ def renewals_by_month():
         buckets[key] = 0
 
     for c in companies:
-        if c["contract_status"] == "Cancelled":
-            continue
         rd = datetime.strptime(c["renewal_date"], "%Y-%m-%d").date()
         key = f"{rd.year}-{rd.month:02d}"
         if key in buckets:
@@ -98,19 +95,15 @@ def _segment_buckets(companies: list[dict], key_fn) -> list[dict]:
         g = groups.setdefault(
             key,
             {
-                "key": key, "total": 0, "active": 0, "pending_renewal": 0, "expired": 0,
-                "cancelled": 0, "payments_late": 0, "invoices_not_sent": 0, "at_risk_count": 0,
+                "key": key, "total": 0, "active": 0, "expired": 0,
+                "payments_late": 0, "invoices_not_sent": 0, "at_risk_count": 0,
             },
         )
         g["total"] += 1
         if c["contract_status"] == "Active":
             g["active"] += 1
-        elif c["contract_status"] == "Pending Renewal":
-            g["pending_renewal"] += 1
         elif c["contract_status"] == "Expired":
             g["expired"] += 1
-        elif c["contract_status"] == "Cancelled":
-            g["cancelled"] += 1
         if c["payment_status"] == "Late Payment":
             g["payments_late"] += 1
         if c["invoice_request_status"] == "Not Sent":
