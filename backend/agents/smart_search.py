@@ -164,7 +164,6 @@ def answer_question(question: str, companies: list[dict], lang: str = "en", hist
                 "membership_plan": c["membership_plan"],
                 "contract_status": c["contract_status"],
                 "renewal_date": c["renewal_date"],
-                "next_payment_due": c["next_payment_due"],
                 "payment_status": c["effective_payment_status"],
                 "invoice_status": c["invoice_request_status"],
                 "monthly_fee_jpy": c["monthly_fee_jpy"],

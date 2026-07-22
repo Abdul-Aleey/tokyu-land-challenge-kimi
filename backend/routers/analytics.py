@@ -86,8 +86,7 @@ def risk_radar(limit: int = 8):
     return [
         RiskRadarItem(
             id=c["id"], name=c["name"], industry=c["industry"],
-            payment_status=c["payment_status"], renewal_date=c["renewal_date"],
-            next_payment_due=c["next_payment_due"], risk=c["risk"],
+            payment_status=c["payment_status"], renewal_date=c["renewal_date"], risk=c["risk"],
         )
         for c in at_risk[:limit]
     ]

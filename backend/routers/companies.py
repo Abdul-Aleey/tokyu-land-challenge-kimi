@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import difflib
 import re
-from datetime import date, datetime
+from datetime import date
 
 from fastapi import APIRouter, HTTPException
 
 from backend.db import db_session
 from backend.gcs_store import upload_db
-from backend.risk import add_one_month, enrich_company
+from backend.risk import enrich_company
 from backend.schemas import (
     CompanyDetailOut,
     CompanyOut,
@@ -28,7 +28,7 @@ VALID_INVOICE = {"Sent", "Not Sent"}
 _WRITABLE_FIELDS = (
     "name", "name_kana", "industry", "membership_plan", "contact_person", "contact_email",
     "contact_phone", "contract_status", "contract_start_date", "renewal_date", "payment_status",
-    "last_payment_date", "next_payment_due", "monthly_fee_jpy", "invoice_request_status",
+    "last_payment_date", "monthly_fee_jpy", "invoice_request_status",
     "invoice_sent_date", "notes",
 )
 
@@ -248,13 +248,6 @@ def update_status(company_id: int, payload: StatusUpdateRequest):
 
         if "payment_status" in updates:
             updates["last_payment_date"] = date.today().isoformat() if final_payment == "Paid" else None
-            if final_payment == "Paid":
-                # This quick editor has no date picker for next_payment_due --
-                # marking a payment as received rolls the recurring due date
-                # forward by one month from wherever it currently stands.
-                current_due_iso = existing["next_payment_due"] or date.today().isoformat()
-                current_due = datetime.strptime(current_due_iso, "%Y-%m-%d").date()
-                updates["next_payment_due"] = add_one_month(current_due).isoformat()
         if "invoice_request_status" in updates:
             updates["invoice_sent_date"] = date.today().isoformat() if final_invoice == "Sent" else None
 

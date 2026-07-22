@@ -44,7 +44,6 @@ const I18N = {
     drawerContact: "Contact", drawerPlan: "Plan", drawerFee: "Monthly Fee",
     drawerStarted: "Member Since", drawerLastPayment: "Last Payment", drawerNotes: "Ops Notes",
     drawerEmail: "Email", drawerPhone: "Phone", drawerInvoiceSent: "Invoice Sent",
-    drawerPaymentDue: "Payment Due", formPaymentDue: "Next payment due date",
     aiCallScript: "Suggested call script", aiRecommended: "Recommended action",
     copy: "Copy", copied: "Copied!",
     emailSectionTitle: "Email (demo)", sendEmail: "Send Email",
@@ -155,7 +154,6 @@ const I18N = {
     drawerContact: "担当者", drawerPlan: "プラン", drawerFee: "月額料金",
     drawerStarted: "契約開始日", drawerLastPayment: "直近の支払い", drawerNotes: "運営メモ",
     drawerEmail: "メールアドレス", drawerPhone: "電話番号", drawerInvoiceSent: "請求書送付日",
-    drawerPaymentDue: "次回支払期日", formPaymentDue: "次回支払期日",
     aiCallScript: "応答スクリプト案", aiRecommended: "推奨アクション",
     copy: "コピー", copied: "コピーしました",
     emailSectionTitle: "メール（デモ）", sendEmail: "メール送信",
@@ -254,12 +252,12 @@ const HELP_GUIDE = {
       },
       {
         h: "AI Risk Radar",
-        p: ["A scrollable strip of the companies needing attention first, ranked by risk, showing their payment status and payment due date, so you see priorities before you even search."],
+        p: ["A scrollable strip of the companies needing attention first, ranked by risk, showing their payment status and renewal date, so you see priorities before you even search."],
         items: [],
       },
       {
         h: "Company details",
-        p: ["Click any row to open its full details, including contact email, phone, invoice sent date, payment due date, and last payment date. These only appear here, not in the list, and last payment date only shows once the company has actually been paid."],
+        p: ["Click any row to open its full details, including contact email, phone, invoice sent date, and last payment date. These only appear here, not in the list, and last payment date only shows once the company has actually been paid."],
         items: [],
       },
       {
@@ -268,9 +266,8 @@ const HELP_GUIDE = {
         items: [
           "Contract status is Active or Expired. Payment status is Paid or Not Paid, and invoice request status is Sent or Not Sent. That's what the table and drawer show.",
           "A company can never be marked Paid until its invoice has been marked Sent.",
-          "Every company has a recurring monthly payment due date, separate from its contract renewal date. \"Late Payment\" is never set by hand: it appears automatically once a company is unpaid past that due date, shown as the Payment badge turning red and the Risk column showing Critical.",
-          "Risk level follows payment timing, and only applies once an invoice has actually been Sent: Critical (unpaid, past due date), High (unpaid, due today), Low (unpaid, due within a week), otherwise no risk. An unpaid company whose invoice hasn't been sent yet is never flagged as risk, since there's no issued invoice to be late on.",
-          "Marking a company Paid automatically rolls its payment due date forward one month.",
+          "The membership fee for a contract term is due by that term's renewal date, and the invoice for it is sent one month before renewal. \"Late Payment\" is never set by hand: it appears automatically once a company is unpaid past its renewal date, shown as the Payment badge turning red and the Risk column showing Critical.",
+          "Risk level follows payment timing relative to the renewal date, and only applies once an invoice has actually been Sent: Critical (unpaid, renewal date already passed), High (unpaid, renewal date is today), Low (unpaid, renewal within the next 3 days), otherwise no risk. An unpaid company whose invoice hasn't been sent yet is never flagged as risk, since there's no issued invoice to be late on.",
         ],
       },
       {
@@ -278,7 +275,7 @@ const HELP_GUIDE = {
         p: [],
         items: [
           "Inside a company's details, use \"Update status\" for a quick contract, payment, or invoice change.",
-          "\"Modify record\" opens the full edit form for every field on that company, including its payment due date.",
+          "\"Modify record\" opens the full edit form for every field on that company.",
           "\"Add Record\" above the table creates a brand new company.",
           "\"Delete record\" permanently removes a company and its activity history.",
           "Every change is logged to that company's activity timeline.",
@@ -336,12 +333,12 @@ const HELP_GUIDE = {
       },
       {
         h: "AIリスクレーダー",
-        p: ["優先的に対応が必要な企業を、支払状況と支払期日とともにリスク順に並べた一覧です。検索する前に、まず確認すべき企業がひと目でわかります。"],
+        p: ["優先的に対応が必要な企業を、支払状況と更新日とともにリスク順に並べた一覧です。検索する前に、まず確認すべき企業がひと目でわかります。"],
         items: [],
       },
       {
         h: "会社詳細",
-        p: ["行をクリックすると詳細が開き、担当者メール、電話番号、請求書送付日、次回支払期日、直近の支払日が表示されます。これらは詳細画面でのみ表示され、直近の支払日は実際に支払いが完了している場合のみ表示されます。"],
+        p: ["行をクリックすると詳細が開き、担当者メール、電話番号、請求書送付日、直近の支払日が表示されます。これらは詳細画面でのみ表示され、直近の支払日は実際に支払いが完了している場合のみ表示されます。"],
         items: [],
       },
       {
@@ -350,9 +347,8 @@ const HELP_GUIDE = {
         items: [
           "契約状況は「有効」または「契約終了」、支払状況は「支払済み」または「未払い」、請求書対応は「送付済み」または「未送付」です。表と詳細画面にはこれらのみが表示されます。",
           "請求書が「送付済み」になるまで、支払いステータスを「支払済み」にすることはできません。",
-          "会員企業ごとに、契約更新日とは別に、毎月の支払期日があります。「支払遅延」は手動設定ではなく、未払いのままこの期日を過ぎると自動的に表示され、支払バッジが赤くなり、リスク欄が「重大」になります。",
-          "リスクレベルは支払いのタイミングで決まり、請求書が実際に「送付済み」の場合のみ適用されます。重大（未払いで期日超過）、高（未払いで本日が期日）、低（未払いで期日まで1週間以内）、それ以外はリスクなしです。請求書が未送付の会社は、どれだけ期日を過ぎていてもリスクとして表示されません。",
-          "支払済みにすると、次回の支払期日は自動的に1か月先に更新されます。",
+          "契約期間分の会費は、その契約の更新日までに支払う必要があり、請求書は更新日の1か月前に送付されます。「支払遅延」は手動設定ではなく、未払いのまま更新日を過ぎると自動的に表示され、支払バッジが赤くなり、リスク欄が「重大」になります。",
+          "リスクレベルは更新日を基準にした支払いのタイミングで決まり、請求書が実際に「送付済み」の場合のみ適用されます。重大（未払いで更新日を経過）、高（未払いで本日が更新日）、低（未払いで更新日まで3日以内）、それ以外はリスクなしです。請求書が未送付の会社は、どれだけ日数が経過していてもリスクとして表示されません。",
         ],
       },
       {
@@ -360,7 +356,7 @@ const HELP_GUIDE = {
         p: [],
         items: [
           "詳細画面の「ステータス更新」で、契約、支払、請求書のステータスをすばやく変更できます。",
-          "「編集する」では、支払期日を含む、その会社のすべての項目を編集できます。",
+          "「編集する」では、その会社のすべての項目を編集できます。",
           "表の上にある「新規登録」で新しい会社を登録できます。",
           "「削除する」で会社とその活動履歴を完全に削除します。",
           "変更内容はすべてその会社のアクティビティ履歴に記録されます。",
@@ -527,12 +523,6 @@ function toast(msg) {
 const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const MONTHS_EN_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-function isoDatePlusDays(days) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
 function formatDate(iso, lang) {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
@@ -679,7 +669,7 @@ function renderRadar(items) {
     meta.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), paymentBadgeLevel(c)));
     const dueDate = document.createElement("span");
     dueDate.className = "radar-renewal";
-    dueDate.textContent = `${t("drawerPaymentDue")}: ${formatDate(c.next_payment_due, state.lang)}`;
+    dueDate.textContent = `${t("colRenewal")}: ${formatDate(c.renewal_date, state.lang)}`;
     meta.appendChild(dueDate);
     card.appendChild(meta);
 
@@ -1269,7 +1259,6 @@ function renderDrawer(c) {
     ["colRenewal", formatDate(c.renewal_date, state.lang)],
     ["drawerInvoiceSent", formatDate(c.invoice_sent_date, state.lang)],
     ["drawerLastPayment", formatDate(c.last_payment_date, state.lang)],
-    ["drawerPaymentDue", formatDate(c.next_payment_due, state.lang)],
   ];
   items.forEach(([labelKey, val]) => {
     const item = document.createElement("div");
@@ -1462,7 +1451,6 @@ function openRecordModal(mode, company) {
   document.getElementById("fContractStart").value = c.contract_start_date || "";
   document.getElementById("fRenewalDate").value = c.renewal_date || "";
   document.getElementById("fPaymentStatus").value = c.payment_status === "Late Payment" ? "Not Paid" : (c.payment_status || "Not Paid");
-  document.getElementById("fPaymentDue").value = c.next_payment_due || isoDatePlusDays(30);
   document.getElementById("fInvoiceStatus").value = c.invoice_request_status || "Not Sent";
   document.getElementById("fFee").value = c.monthly_fee_jpy != null ? c.monthly_fee_jpy : "";
   document.getElementById("fNotes").value = c.notes || "";
@@ -1608,7 +1596,6 @@ async function submitRecordModal(e) {
     contract_start_date: document.getElementById("fContractStart").value,
     renewal_date: document.getElementById("fRenewalDate").value,
     payment_status: document.getElementById("fPaymentStatus").value,
-    next_payment_due: document.getElementById("fPaymentDue").value,
     monthly_fee_jpy: parseInt(document.getElementById("fFee").value, 10) || 0,
     invoice_request_status: document.getElementById("fInvoiceStatus").value,
     notes: document.getElementById("fNotes").value.trim() || null,

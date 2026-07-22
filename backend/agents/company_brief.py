@@ -88,7 +88,6 @@ def generate_company_brief(company: dict, lang: str = "en") -> dict:
             "contact_person": company.get("contact_person"),
             "contract_status": company["contract_status"],
             "renewal_date": company["renewal_date"],
-            "next_payment_due": company["next_payment_due"],
             "payment_status": company["effective_payment_status"],
             "invoice_request_status": company["invoice_request_status"],
             "risk_reasons": risk["reasons"],

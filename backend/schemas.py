@@ -22,7 +22,6 @@ class CompanyOut(BaseModel):
     payment_status: str
     effective_payment_status: str
     last_payment_date: str | None
-    next_payment_due: str
     invoice_request_status: str
     monthly_fee_jpy: int
     updated_at: str
@@ -69,8 +68,8 @@ class CompanyWriteRequest(BaseModel):
     last_payment_date/invoice_sent_date are optional overrides (e.g. backdating);
     when omitted the backend derives them from payment_status/invoice_request_status
     (today's date on a transition to Paid/Sent, cleared to null otherwise).
-    next_payment_due is the recurring monthly due date used for Late Payment /
-    risk -- separate from renewal_date, which is the contract term date."""
+    Risk/Late Payment is driven by renewal_date -- a member is expected to settle
+    the fee for the term by its renewal date, not on a separate recurring cycle."""
 
     name: str = Field(min_length=1)
     name_kana: str | None = None
@@ -84,7 +83,6 @@ class CompanyWriteRequest(BaseModel):
     renewal_date: str
     payment_status: str
     last_payment_date: str | None = None
-    next_payment_due: str
     monthly_fee_jpy: int = Field(ge=0)
     invoice_request_status: str
     invoice_sent_date: str | None = None
@@ -115,7 +113,6 @@ class RiskRadarItem(BaseModel):
     industry: str
     payment_status: str
     renewal_date: str
-    next_payment_due: str
     risk: RiskOut
 
 
