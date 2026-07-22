@@ -13,8 +13,8 @@ def _fallback(summary: dict, at_risk: list[dict], lang: str) -> dict:
         bullets = []
         if summary["payments_late"]:
             bullets.append(f"{summary['payments_late']}社の支払いが遅延しています。至急フォローしてください。")
-        if summary["invoices_not_sent"]:
-            bullets.append(f"{summary['invoices_not_sent']}社に請求書がまだ送付されていません。")
+        if summary["invoices_overdue_not_sent"]:
+            bullets.append(f"{summary['invoices_overdue_not_sent']}社は更新日が迫っている、または過ぎているのに請求書がまだ送付されていません。")
         if summary["renewals_due_30d"]:
             bullets.append(f"{summary['renewals_due_30d']}社が今後30日以内に契約更新を迎えます。")
         if at_risk:
@@ -28,8 +28,8 @@ def _fallback(summary: dict, at_risk: list[dict], lang: str) -> dict:
         bullets = []
         if summary["payments_late"]:
             bullets.append(f"{summary['payments_late']} companies have late payments -- follow up promptly.")
-        if summary["invoices_not_sent"]:
-            bullets.append(f"{summary['invoices_not_sent']} companies haven't had an invoice sent yet.")
+        if summary["invoices_overdue_not_sent"]:
+            bullets.append(f"{summary['invoices_overdue_not_sent']} companies are due for renewal or already past it and still haven't had an invoice sent.")
         if summary["renewals_due_30d"]:
             bullets.append(f"{summary['renewals_due_30d']} contracts renew within the next 30 days.")
         if at_risk:

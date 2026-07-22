@@ -96,6 +96,7 @@ class AnalyticsSummary(BaseModel):
     payments_late: int
     payments_not_paid: int
     invoices_not_sent: int
+    invoices_overdue_not_sent: int
     at_risk_count: int
     contract_status_breakdown: dict[str, int]
     payment_status_breakdown: dict[str, int]
@@ -129,6 +130,7 @@ class SegmentBucket(BaseModel):
     expired: int
     payments_late: int
     invoices_not_sent: int
+    invoices_overdue_not_sent: int
     at_risk_count: int
 
 

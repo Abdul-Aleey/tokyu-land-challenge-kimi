@@ -59,12 +59,19 @@ def portfolio_insights(lang: str = "en"):
         and c["risk"]["days_to_renewal"] is not None
         and 0 <= c["risk"]["days_to_renewal"] <= 30
     )
+    invoices_overdue_not_sent = sum(
+        1 for c in companies
+        if c["invoice_request_status"] == "Not Sent"
+        and c["risk"]["days_to_renewal"] is not None
+        and c["risk"]["days_to_renewal"] <= 30
+    )
     summary = {
         "total_companies": len(companies),
         "at_risk_count": len(at_risk),
         "renewals_due_30d": renewals_due_30d,
         "payments_late": effective_ct.get("Late Payment", 0),
         "invoices_not_sent": invoice_ct.get("Not Sent", 0),
+        "invoices_overdue_not_sent": invoices_overdue_not_sent,
         "active_contracts": contract_ct.get("Active", 0),
     }
     return generate_portfolio_insights(summary, at_risk, lang=lang)

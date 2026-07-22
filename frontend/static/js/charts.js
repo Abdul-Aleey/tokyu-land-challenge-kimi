@@ -201,6 +201,7 @@ const Charts = (() => {
         hit.addEventListener("pointerenter", (e) => showTooltip(tip, container, e.offsetX, e.offsetY, ttRow(d.label, d.value)));
         hit.addEventListener("pointermove", (e) => showTooltip(tip, container, e.offsetX, e.offsetY, ttRow(d.label, d.value)));
         hit.addEventListener("pointerleave", () => hideTooltip(tip));
+        if (opts.onBarClick) hit.addEventListener("click", () => opts.onBarClick(d));
         svg.appendChild(p);
         svg.appendChild(hit);
 

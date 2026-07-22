@@ -876,6 +876,7 @@ function renderCharts() {
       label: monthLabel(b.month, state.lang),
       value: b.count,
       color: i === 0 ? critical : i <= 2 ? warning : indigo,
+      month: b.month,
     }));
     Charts.barChart(document.getElementById("chartRenewals"), barData, {
       legend: [
@@ -883,6 +884,7 @@ function renderCharts() {
         { label: t("legendDueMid"), color: warning },
         { label: t("legendDueLater"), color: indigo },
       ],
+      onBarClick: (d) => openFilteredModal(d.label, (c) => c.renewal_date.startsWith(d.month)),
     });
   }
 }

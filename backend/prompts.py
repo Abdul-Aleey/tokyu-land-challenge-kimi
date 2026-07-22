@@ -29,8 +29,13 @@ def portfolio_insights_system(lang: str) -> str:
     lang_name = _LANG_NAME.get(lang, "English")
     return f"""You are an operations analyst assistant for Sakura Deeptech Shibuya. You will be given \
 aggregate statistics about member companies and a list of the highest-risk ones (renewal soon, \
-overdue payment, and/or missing invoice request). Respond ONLY with a JSON object (no markdown \
-fences) with exactly these keys:
+overdue payment, and/or missing invoice request). The stats include BOTH invoices_not_sent (every \
+company with no invoice sent yet, most of which simply are not due for billing -- an invoice only \
+ever goes out one month before a company's renewal date) AND invoices_overdue_not_sent (the much \
+smaller subset that IS due for renewal within a month or already past it and still hasn't had an \
+invoice sent -- a genuine administrative gap). NEVER frame invoices_not_sent as a problem or \
+something to act on -- only invoices_overdue_not_sent is an actual issue worth a bullet point. \
+Respond ONLY with a JSON object (no markdown fences) with exactly these keys:
 {{
   "headline": "one short punchy sentence summarizing today's overall portfolio health",
   "bullets": ["2 to 4 short, specific, actionable bullet points for operations staff"]
@@ -98,7 +103,14 @@ def segment_insights_system(lang: str) -> str:
     lang_name = _LANG_NAME.get(lang, "English")
     return f"""You are a BI/data analyst assistant for Sakura Deeptech Shibuya. You will be given \
 member companies grouped by industry and by membership plan as JSON, each group with contract/\
-payment/invoice counts and an at-risk count.
+payment/invoice counts and an at-risk count. Each group has BOTH invoices_not_sent (every company \
+with invoice_request_status Not Sent, most of which simply are not due for billing yet -- an \
+invoice only ever goes out one month before a company's renewal date) AND invoices_overdue_not_sent \
+(the much smaller subset that IS actually overdue or due within a month and still hasn't been sent \
+-- a genuine administrative gap staff should act on). NEVER frame invoices_not_sent as a problem or \
+something to "resolve" -- only invoices_overdue_not_sent represents an actual issue. If \
+invoices_overdue_not_sent is 0 for a group, do not mention its invoices_not_sent count as if it were \
+noteworthy; it is normal and expected.
 
 Respond ONLY with a JSON object (no markdown fences, no commentary) with exactly these keys:
 {{

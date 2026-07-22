@@ -39,6 +39,16 @@ def summary():
         and 0 <= c["risk"]["days_to_renewal"] <= 30
     )
     at_risk = sum(1 for c in companies if c["risk"]["level"] in ("High", "Critical"))
+    # An invoice can only be sent within a month of renewal (or once it's
+    # passed) -- most "Not Sent" companies simply aren't due for billing yet,
+    # not an administrative gap. Only count it as a genuine gap once it's
+    # inside that window.
+    invoices_overdue_not_sent = sum(
+        1 for c in companies
+        if c["invoice_request_status"] == "Not Sent"
+        and c["risk"]["days_to_renewal"] is not None
+        and c["risk"]["days_to_renewal"] <= 30
+    )
 
     return AnalyticsSummary(
         total_companies=len(companies),
@@ -47,6 +57,7 @@ def summary():
         payments_late=effective_ct.get("Late Payment", 0),
         payments_not_paid=payment_ct.get("Not Paid", 0),
         invoices_not_sent=invoice_ct.get("Not Sent", 0),
+        invoices_overdue_not_sent=invoices_overdue_not_sent,
         at_risk_count=at_risk,
         contract_status_breakdown=dict(contract_ct),
         payment_status_breakdown=dict(payment_ct),
@@ -100,7 +111,8 @@ def _segment_buckets(companies: list[dict], key_fn) -> list[dict]:
             key,
             {
                 "key": key, "total": 0, "active": 0, "expired": 0,
-                "payments_late": 0, "invoices_not_sent": 0, "at_risk_count": 0,
+                "payments_late": 0, "invoices_not_sent": 0,
+                "invoices_overdue_not_sent": 0, "at_risk_count": 0,
             },
         )
         g["total"] += 1
@@ -112,6 +124,13 @@ def _segment_buckets(companies: list[dict], key_fn) -> list[dict]:
             g["payments_late"] += 1
         if c["invoice_request_status"] == "Not Sent":
             g["invoices_not_sent"] += 1
+            # An invoice can only be sent within a month of renewal (or once
+            # it's passed) -- so "not sent" this far out just means it isn't
+            # due for billing yet, not an administrative gap. Only count it
+            # as an actual gap once it's inside that window.
+            days = c["risk"]["days_to_renewal"]
+            if days is not None and days <= 30:
+                g["invoices_overdue_not_sent"] += 1
         if c["risk"]["level"] in ("High", "Critical"):
             g["at_risk_count"] += 1
     return sorted(groups.values(), key=lambda g: (-g["at_risk_count"], -g["total"]))
