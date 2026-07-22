@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from contextlib import contextmanager
+from datetime import date, timedelta
 from typing import Iterator
 
 from backend.config import settings
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS companies (
     renewal_date TEXT NOT NULL,
     payment_status TEXT NOT NULL,
     last_payment_date TEXT,
+    next_payment_due TEXT,
     monthly_fee_jpy INTEGER NOT NULL,
     invoice_request_status TEXT NOT NULL,
     invoice_sent_date TEXT,
@@ -56,6 +58,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
     columns = {row["name"] for row in conn.execute("PRAGMA table_info(companies)").fetchall()}
     if "invoice_sent_date" not in columns:
         conn.execute("ALTER TABLE companies ADD COLUMN invoice_sent_date TEXT")
+    if "next_payment_due" not in columns:
+        conn.execute("ALTER TABLE companies ADD COLUMN next_payment_due TEXT")
+        # Backfill a sensible default (one month out) for rows that predate this
+        # column, so payment-due risk logic has something to compare against.
+        default_due = (date.today() + timedelta(days=30)).isoformat()
+        conn.execute("UPDATE companies SET next_payment_due = ? WHERE next_payment_due IS NULL", (default_due,))
 
 
 def init_db() -> None:

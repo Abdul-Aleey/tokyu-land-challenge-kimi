@@ -22,10 +22,14 @@ from backend.config import settings
 # Direct Vertex AI calls are far more reliable than the old third-party proxy,
 # so retries are fewer/shorter than the old Kimi client's -- this is bounded
 # retry for genuine transient errors (429/500/503/504), not a safety net for a
-# flaky upstream.
+# flaky upstream. Kept short deliberately: a real misconfiguration (bad
+# project ID, broken credentials) should fail fast and drop to the
+# rule-based fallback rather than leave staff staring at a spinner -- a
+# 51-second hang was measured in testing before these were tightened.
 _RETRYABLE_CODES = (429, 500, 503, 504)
 _MAX_ATTEMPTS = 2
-_RETRY_BACKOFF_BASE_S = 1.5
+_RETRY_BACKOFF_BASE_S = 1.0
+_DEFAULT_TIMEOUT_S = 8.0
 
 # If GEMINI_MODEL isn't resolvable (typo'd, renamed, not yet available in this
 # region/project), fall back to a known-good model rather than dropping
@@ -78,7 +82,7 @@ def _models_to_try() -> list[str]:
     return models
 
 
-def call_gemini(system_prompt: str, user_content: str | list, *, timeout: float = 30.0) -> dict:
+def call_gemini(system_prompt: str, user_content: str | list, *, timeout: float = _DEFAULT_TIMEOUT_S) -> dict:
     """user_content is either a single string (one-shot question) or a list of
     {"role": "user"|"model", "parts": [{"text": ...}]} turns for a multi-turn
     session -- passed straight through to the SDK's `contents` parameter,
@@ -126,7 +130,7 @@ def check_connection() -> tuple[bool, str, str]:
     if not settings.gcp_project:
         return False, "GOOGLE_CLOUD_PROJECT not set in .env", settings.gemini_model
 
-    config = types.GenerateContentConfig(max_output_tokens=5, http_options=types.HttpOptions(timeout=15000))
+    config = types.GenerateContentConfig(max_output_tokens=5, http_options=types.HttpOptions(timeout=int(_DEFAULT_TIMEOUT_S * 1000)))
 
     last_message = ""
     for model in _models_to_try():

@@ -50,7 +50,7 @@ def portfolio_insights(lang: str = "en"):
     from collections import Counter
 
     contract_ct = Counter(c["contract_status"] for c in companies)
-    payment_ct = Counter(c["payment_status"] for c in companies)
+    effective_ct = Counter(c["effective_payment_status"] for c in companies)
     invoice_ct = Counter(c["invoice_request_status"] for c in companies)
     renewals_due_30d = sum(
         1
@@ -63,7 +63,7 @@ def portfolio_insights(lang: str = "en"):
         "total_companies": len(companies),
         "at_risk_count": len(at_risk),
         "renewals_due_30d": renewals_due_30d,
-        "payments_late": payment_ct.get("Late Payment", 0),
+        "payments_late": effective_ct.get("Late Payment", 0),
         "invoices_not_sent": invoice_ct.get("Not Sent", 0),
         "active_contracts": contract_ct.get("Active", 0),
     }

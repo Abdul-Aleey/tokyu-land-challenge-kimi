@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import difflib
 import re
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, HTTPException
 
 from backend.db import db_session
 from backend.gcs_store import upload_db
-from backend.risk import enrich_company
+from backend.risk import add_one_month, enrich_company
 from backend.schemas import (
     CompanyDetailOut,
     CompanyOut,
@@ -28,7 +28,8 @@ VALID_INVOICE = {"Sent", "Not Sent"}
 _WRITABLE_FIELDS = (
     "name", "name_kana", "industry", "membership_plan", "contact_person", "contact_email",
     "contact_phone", "contract_status", "contract_start_date", "renewal_date", "payment_status",
-    "last_payment_date", "monthly_fee_jpy", "invoice_request_status", "invoice_sent_date", "notes",
+    "last_payment_date", "next_payment_due", "monthly_fee_jpy", "invoice_request_status",
+    "invoice_sent_date", "notes",
 )
 
 
@@ -79,9 +80,13 @@ def list_companies(search: str = "", contract_status: str = "", payment_status: 
         rows = conn.execute(query, params).fetchall()
 
     companies = [enrich_company(dict(r)) for r in rows]
-    # payment_status is a computed value (Late Payment isn't a raw column), so it's
-    # filtered here in Python rather than in the SQL WHERE clause above.
-    if payment_status:
+    # "Late Payment" isn't a raw column (it's Not Paid + past the renewal
+    # date) -- Ask AI can still filter by it via effective_payment_status,
+    # even though the table/filter dropdown only ever show the raw
+    # Paid/Not Paid ground truth.
+    if payment_status == "Late Payment":
+        companies = [c for c in companies if c["effective_payment_status"] == "Late Payment"]
+    elif payment_status:
         companies = [c for c in companies if c["payment_status"] == payment_status]
     companies.sort(key=lambda c: c["risk"]["score"], reverse=True)
     return companies
@@ -243,6 +248,13 @@ def update_status(company_id: int, payload: StatusUpdateRequest):
 
         if "payment_status" in updates:
             updates["last_payment_date"] = date.today().isoformat() if final_payment == "Paid" else None
+            if final_payment == "Paid":
+                # This quick editor has no date picker for next_payment_due --
+                # marking a payment as received rolls the recurring due date
+                # forward by one month from wherever it currently stands.
+                current_due_iso = existing["next_payment_due"] or date.today().isoformat()
+                current_due = datetime.strptime(current_due_iso, "%Y-%m-%d").date()
+                updates["next_payment_due"] = add_one_month(current_due).isoformat()
         if "invoice_request_status" in updates:
             updates["invoice_sent_date"] = date.today().isoformat() if final_invoice == "Sent" else None
 

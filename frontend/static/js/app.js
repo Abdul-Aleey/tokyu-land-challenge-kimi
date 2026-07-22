@@ -44,10 +44,12 @@ const I18N = {
     drawerContact: "Contact", drawerPlan: "Plan", drawerFee: "Monthly Fee",
     drawerStarted: "Member Since", drawerLastPayment: "Last Payment", drawerNotes: "Ops Notes",
     drawerEmail: "Email", drawerPhone: "Phone", drawerInvoiceSent: "Invoice Sent",
+    drawerPaymentDue: "Payment Due", formPaymentDue: "Next payment due date",
     aiCallScript: "Suggested call script", aiRecommended: "Recommended action",
     copy: "Copy", copied: "Copied!",
     emailSectionTitle: "Email (demo)", sendEmail: "Send Email",
     emailSentTo: "Email sent to", emailSentNoAddress: "Email sent (no address on file)",
+    sendInvoice: "Send Invoice", invoiceSent: "Invoice marked as sent",
     statusEditorTitle: "Update status", save: "Save changes", saved: "Status updated",
     timelineTitle: "Activity timeline",
     modifyRecord: "Modify record", deleteRecord: "Delete record", deleted: "Record deleted",
@@ -153,10 +155,12 @@ const I18N = {
     drawerContact: "担当者", drawerPlan: "プラン", drawerFee: "月額料金",
     drawerStarted: "契約開始日", drawerLastPayment: "直近の支払い", drawerNotes: "運営メモ",
     drawerEmail: "メールアドレス", drawerPhone: "電話番号", drawerInvoiceSent: "請求書送付日",
+    drawerPaymentDue: "次回支払期日", formPaymentDue: "次回支払期日",
     aiCallScript: "応答スクリプト案", aiRecommended: "推奨アクション",
     copy: "コピー", copied: "コピーしました",
     emailSectionTitle: "メール（デモ）", sendEmail: "メール送信",
     emailSentTo: "メールを送信しました：", emailSentNoAddress: "メールを送信しました（登録アドレスなし）",
+    sendInvoice: "請求書送付", invoiceSent: "請求書を送付済みにしました",
     statusEditorTitle: "ステータス更新", save: "保存する", saved: "ステータスを更新しました",
     timelineTitle: "アクティビティ履歴",
     modifyRecord: "編集する", deleteRecord: "削除する", deleted: "レコードを削除しました",
@@ -227,6 +231,11 @@ const HELP_GUIDE = {
     title: "How to use this dashboard",
     sections: [
       {
+        h: "What this is",
+        p: ["The Sakura Deeptech Shibuya member status console. It lets staff look up any member company's contract, payment, and invoice status in seconds, and manage that data day to day."],
+        items: [],
+      },
+      {
         h: "Search & filter",
         p: [],
         items: [
@@ -238,28 +247,30 @@ const HELP_GUIDE = {
       {
         h: "Ask AI",
         p: [
-          "Type a question in plain language and click Ask. It answers directly, in whichever language you're using, and when relevant also filters the table to the companies it's talking about. For example, \"which company is at highest risk?\" or \"how many companies have a late payment?\".",
+          "Type a question in plain language and click Ask. It answers directly, in whichever language you're using, and when relevant also filters the table to the companies it's talking about. For example, \"which company is at highest risk?\" or \"how many companies have a late payment?\". You can also ask it about the dashboard itself, e.g. \"how do I add a company?\" or \"what does Late Payment mean?\".",
           "Choose \"Single Question\" for a one-off lookup, or switch to \"Session\" to ask follow-up questions with memory of what you already asked (e.g. \"and which of those renews soonest?\"). Click \"New Session\" any time to start a fresh conversation.",
         ],
         items: [],
       },
       {
         h: "AI Risk Radar",
-        p: ["A scrollable strip of the companies needing attention first, ranked by risk, so you see priorities before you even search."],
+        p: ["A scrollable strip of the companies needing attention first, ranked by risk, showing their payment status and payment due date, so you see priorities before you even search."],
         items: [],
       },
       {
         h: "Company details",
-        p: ["Click any row to open its full details, including contact email, phone, invoice sent date, and payment date. These only appear here, not in the list, and payment date only shows once the company has actually been paid."],
+        p: ["Click any row to open its full details, including contact email, phone, invoice sent date, payment due date, and last payment date. These only appear here, not in the list, and last payment date only shows once the company has actually been paid."],
         items: [],
       },
       {
         h: "Payment & invoice rules",
         p: [],
         items: [
+          "Contract status is Active or Expired. Payment status is Paid or Not Paid, and invoice request status is Sent or Not Sent. That's what the table and drawer show.",
           "A company can never be marked Paid until its invoice has been marked Sent.",
-          "\"Late Payment\" appears automatically once a company is unpaid past its renewal date. It's never set by hand.",
-          "Risk level follows payment timing, and only applies once an invoice has actually been Sent: Critical (unpaid, past renewal date), High (unpaid, due today), Low (unpaid, due within 3 days), otherwise no risk. An unpaid company whose invoice hasn't been sent yet is never flagged as risk, since there's no issued invoice to be late on.",
+          "Every company has a recurring monthly payment due date, separate from its contract renewal date. \"Late Payment\" is never set by hand: it appears automatically once a company is unpaid past that due date, shown as the Payment badge turning red and the Risk column showing Critical.",
+          "Risk level follows payment timing, and only applies once an invoice has actually been Sent: Critical (unpaid, past due date), High (unpaid, due today), Low (unpaid, due within a week), otherwise no risk. An unpaid company whose invoice hasn't been sent yet is never flagged as risk, since there's no issued invoice to be late on.",
+          "Marking a company Paid automatically rolls its payment due date forward one month.",
         ],
       },
       {
@@ -267,25 +278,28 @@ const HELP_GUIDE = {
         p: [],
         items: [
           "Inside a company's details, use \"Update status\" for a quick contract, payment, or invoice change.",
-          "\"Modify record\" opens the full edit form for every field on that company.",
+          "\"Modify record\" opens the full edit form for every field on that company, including its payment due date.",
           "\"Add Record\" above the table creates a brand new company.",
           "\"Delete record\" permanently removes a company and its activity history.",
           "Every change is logged to that company's activity timeline.",
         ],
       },
       {
-        h: "Email (demo)",
-        p: ["Inside a company's details, the Email box is pre-filled with the AI call script and can be edited freely. \"Send Email\" is a showcase action only, no real email is sent, but it logs the send to the activity timeline so it behaves like part of a real workflow."],
+        h: "Email (demo) & Send Invoice",
+        p: [
+          "Inside a company's details, the Email box is pre-filled with an AI-drafted email (greeting, status update, and a closing signature) and can be edited freely. \"Send Email\" is a showcase action only, no real email is sent, but it logs the send to the activity timeline.",
+          "When invoice status is Not Sent, a \"Send Invoice\" button appears next to the status badges. Unlike Send Email, this is a real action: it marks the invoice Sent and sets its sent date.",
+        ],
         items: [],
       },
       {
-        h: "Table & pagination",
-        p: ["Choose 10, 25, or 50 rows per page and use Prev/Next to page through the list. \"Export CSV\" downloads exactly what's currently shown, with search and filters applied, and Japanese characters export correctly for Excel."],
+        h: "Table, sorting & pagination",
+        p: ["Click any column header to sort by it (click again to reverse the direction, shown by the arrow). Choose 10, 25, or 50 rows per page and use Prev/Next to page through the list. \"Export CSV\" downloads exactly what's currently shown, with search and filters applied, and Japanese characters export correctly for Excel."],
         items: [],
       },
       {
         h: "Analytics & segmentation",
-        p: ["Below the table, Portfolio Analytics breaks down contract, payment, and invoice status plus upcoming renewals by month. Segmentation shows the same risk picture grouped by membership plan and industry."],
+        p: ["Below the table, Portfolio Analytics breaks down contract, payment, and invoice status plus upcoming renewals by month. Segmentation shows the same risk picture grouped by membership plan and industry. The 5 summary tiles at the top, every chart segment, each membership plan card, and each industry row are all clickable: they open a popup listing exactly which companies make up that number."],
         items: [],
       },
       {
@@ -299,6 +313,11 @@ const HELP_GUIDE = {
     title: "このダッシュボードの使い方",
     sections: [
       {
+        h: "概要",
+        p: ["サクラ ディープテック渋谷の会員ステータス管理画面です。会員企業の契約、支払い、請求書ステータスをすぐに確認し、日々のデータ管理も行えます。"],
+        items: [],
+      },
+      {
         h: "検索・フィルター",
         p: [],
         items: [
@@ -310,28 +329,30 @@ const HELP_GUIDE = {
       {
         h: "AI検索",
         p: [
-          "自然な文章で質問を入力して「質問する」を押すと、その場で直接回答します（表示言語で回答）。関連する会社があれば、表の絞り込みも自動で行われます。例：「最もリスクが高い会社は？」「支払いが遅延している会社は何社？」など。",
+          "自然な文章で質問を入力して「質問する」を押すと、その場で直接回答します（表示言語で回答）。関連する会社があれば、表の絞り込みも自動で行われます。例：「最もリスクが高い会社は？」「支払いが遅延している会社は何社？」など。「新しい会社の登録方法は？」「支払遅延とは？」のような、ダッシュボード自体についての質問にも答えられます。",
           "1回限りの質問には「単発質問」を、直前のやり取りを踏まえて続けて質問したい場合は「セッション」を選んでください（例：「その中で一番早く更新を迎えるのは？」）。「新しいセッション」でいつでも会話をリセットできます。",
         ],
         items: [],
       },
       {
         h: "AIリスクレーダー",
-        p: ["優先的に対応が必要な企業をリスク順に並べた一覧です。検索する前に、まず確認すべき企業がひと目でわかります。"],
+        p: ["優先的に対応が必要な企業を、支払状況と支払期日とともにリスク順に並べた一覧です。検索する前に、まず確認すべき企業がひと目でわかります。"],
         items: [],
       },
       {
         h: "会社詳細",
-        p: ["行をクリックすると詳細が開き、担当者メール、電話番号、請求書送付日、支払日が表示されます。これらは詳細画面でのみ表示され、支払日は実際に支払いが完了している場合のみ表示されます。"],
+        p: ["行をクリックすると詳細が開き、担当者メール、電話番号、請求書送付日、次回支払期日、直近の支払日が表示されます。これらは詳細画面でのみ表示され、直近の支払日は実際に支払いが完了している場合のみ表示されます。"],
         items: [],
       },
       {
         h: "支払い・請求書のルール",
         p: [],
         items: [
+          "契約状況は「有効」または「契約終了」、支払状況は「支払済み」または「未払い」、請求書対応は「送付済み」または「未送付」です。表と詳細画面にはこれらのみが表示されます。",
           "請求書が「送付済み」になるまで、支払いステータスを「支払済み」にすることはできません。",
-          "「支払遅延」は、未払いのまま更新日を過ぎると自動的に表示されます（手動設定はしません）。",
-          "リスクレベルは支払いのタイミングで決まり、請求書が実際に「送付済み」の場合のみ適用されます。重大（未払いで更新日超過）、高（未払いで本日が期日）、低（未払いで期日まで3日以内）、それ以外はリスクなしです。請求書が未送付の会社は、どれだけ更新日を過ぎていてもリスクとして表示されません。",
+          "会員企業ごとに、契約更新日とは別に、毎月の支払期日があります。「支払遅延」は手動設定ではなく、未払いのままこの期日を過ぎると自動的に表示され、支払バッジが赤くなり、リスク欄が「重大」になります。",
+          "リスクレベルは支払いのタイミングで決まり、請求書が実際に「送付済み」の場合のみ適用されます。重大（未払いで期日超過）、高（未払いで本日が期日）、低（未払いで期日まで1週間以内）、それ以外はリスクなしです。請求書が未送付の会社は、どれだけ期日を過ぎていてもリスクとして表示されません。",
+          "支払済みにすると、次回の支払期日は自動的に1か月先に更新されます。",
         ],
       },
       {
@@ -339,25 +360,28 @@ const HELP_GUIDE = {
         p: [],
         items: [
           "詳細画面の「ステータス更新」で、契約、支払、請求書のステータスをすばやく変更できます。",
-          "「編集する」では、その会社のすべての項目を編集できます。",
+          "「編集する」では、支払期日を含む、その会社のすべての項目を編集できます。",
           "表の上にある「新規登録」で新しい会社を登録できます。",
           "「削除する」で会社とその活動履歴を完全に削除します。",
           "変更内容はすべてその会社のアクティビティ履歴に記録されます。",
         ],
       },
       {
-        h: "メール（デモ）",
-        p: ["詳細画面のメール欄には、AIの応答スクリプト案があらかじめ入力されており、自由に編集できます。「メール送信」はあくまでデモ用の操作で、実際にメールは送信されませんが、アクティビティ履歴には送信記録として残ります。"],
+        h: "メール（デモ）と請求書送付",
+        p: [
+          "詳細画面のメール欄には、挨拶・状況説明・結びの署名を含むAI作成のメール案があらかじめ入力されており、自由に編集できます。「メール送信」はあくまでデモ用の操作で、実際にメールは送信されませんが、アクティビティ履歴には送信記録として残ります。",
+          "請求書対応が「未送付」の場合、ステータスバッジの隣に「請求書送付」ボタンが表示されます。メール送信とは異なり、こちらは実際の操作です。請求書対応を「送付済み」にし、送付日を記録します。",
+        ],
         items: [],
       },
       {
-        h: "表とページ表示",
-        p: ["表示件数は10、25、50件から選べ、「前へ」「次へ」でページを送れます。「CSV出力」は現在表示中の内容（検索・フィルター適用後）をそのまま出力し、日本語もExcelで正しく表示されます。"],
+        h: "表、並べ替え、ページ表示",
+        p: ["列見出しをクリックすると、その列で並べ替えられます（もう一度クリックすると昇順・降順が切り替わり、矢印で表示されます）。表示件数は10、25、50件から選べ、「前へ」「次へ」でページを送れます。「CSV出力」は現在表示中の内容（検索・フィルター適用後）をそのまま出力し、日本語もExcelで正しく表示されます。"],
         items: [],
       },
       {
         h: "分析・セグメント",
-        p: ["表の下にある「ポートフォリオ分析」では契約、支払、請求書ステータスの内訳と月別更新予定を、「セグメント分析」ではプラン別、業種別の同じリスク傾向を確認できます。"],
+        p: ["表の下にある「ポートフォリオ分析」では契約、支払、請求書ステータスの内訳と月別更新予定を、「セグメント分析」ではプラン別、業種別の同じリスク傾向を確認できます。上部の5つのサマリータイル、各グラフのセグメント、プランごとのカード、業種ごとの行はすべてクリックでき、該当する会社の一覧をポップアップで表示します。"],
         items: [],
       },
       {
@@ -375,9 +399,18 @@ const INVOICE_KEYS = { "Sent": "statusSent", "Not Sent": "statusNotSent" };
 const RISK_KEYS = { "Critical": "riskCritical", "High": "riskHigh", "Medium": "riskMedium", "Low": "riskLow", "None": "riskNone" };
 
 const CONTRACT_BADGE = { "Active": "good", "Expired": "serious" };
-const PAYMENT_BADGE = { "Paid": "good", "Not Paid": "warning", "Late Payment": "critical" };
+const PAYMENT_BADGE = { "Paid": "good", "Not Paid": "warning" };
 const INVOICE_BADGE = { "Sent": "good", "Not Sent": "serious" };
 const RISK_BADGE = { "Critical": "critical", "High": "serious", "Medium": "warning", "Low": "good", "None": "neutral" };
+
+// "Not Paid" is normally just a warning amber, but if the underlying risk is
+// Critical (unpaid, invoice Sent, past the renewal date) it renders red like
+// the rest of the app's critical-severity signals -- without reintroducing
+// "Late Payment" as a separately displayed status value.
+function paymentBadgeLevel(c) {
+  if (c.payment_status === "Not Paid" && c.risk && c.risk.level === "Critical") return "critical";
+  return PAYMENT_BADGE[c.payment_status] || "neutral";
+}
 
 // Payment/invoice selects in the Add/Modify form only ever offer the raw
 // ground-truth values staff can set -- "Late Payment" is always computed.
@@ -393,9 +426,10 @@ const EVENT_KEYS = {
 
 const state = {
   lang: localStorage.getItem("sds_lang") || "en",
-  theme: localStorage.getItem("sds_theme") || "dark",
+  theme: localStorage.getItem("sds_theme") || "light",
   filters: { search: "", contract_status: "", payment_status: "", invoice_status: "" },
   pagination: { page: 1, pageSize: 25 },
+  sort: { key: null, dir: "asc" },
   summary: null,
   renewalsByMonth: null,
   insightCache: {},
@@ -485,6 +519,12 @@ function toast(msg) {
 const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const MONTHS_EN_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+function isoDatePlusDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function formatDate(iso, lang) {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
@@ -494,8 +534,9 @@ function formatDate(iso, lang) {
 
 function monthLabel(yyyymm, lang) {
   const [y, m] = yyyymm.split("-").map(Number);
-  if (lang === "ja") return `${m}月`;
-  return MONTHS_EN_SHORT[m - 1];
+  const shortYear = String(y).slice(-2);
+  if (lang === "ja") return `${shortYear}年${m}月`;
+  return `${MONTHS_EN_SHORT[m - 1]} '${shortYear}`;
 }
 
 function translateReason(reason, lang) {
@@ -505,8 +546,8 @@ function translateReason(reason, lang) {
     "Payment due today, not yet received": "本日が支払期日ですが、まだ入金が確認できていません",
   };
   if (table[reason]) return table[reason];
-  let m = reason.match(/Renewal due in (\d+) day\(s\)/);
-  if (m) return `更新まで残り${m[1]}日、支払未確認`;
+  let m = reason.match(/Payment due in (\d+) day\(s\)/);
+  if (m) return `支払期日まで残り${m[1]}日、まだ入金が確認できていません`;
   return reason;
 }
 
@@ -625,6 +666,15 @@ function renderRadar(items) {
     industry.textContent = c.industry;
     card.appendChild(industry);
 
+    const meta = document.createElement("div");
+    meta.className = "radar-meta";
+    meta.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), paymentBadgeLevel(c)));
+    const dueDate = document.createElement("span");
+    dueDate.className = "radar-renewal";
+    dueDate.textContent = `${t("drawerPaymentDue")}: ${formatDate(c.next_payment_due, state.lang)}`;
+    meta.appendChild(dueDate);
+    card.appendChild(meta);
+
     c.risk.reasons.slice(0, 2).forEach((r) => {
       const reason = document.createElement("div");
       reason.className = "radar-reason";
@@ -638,6 +688,49 @@ function renderRadar(items) {
 }
 
 /* ---------------------------- table ---------------------------- */
+function buildCompanyRow(c, onClick) {
+  const tr = document.createElement("tr");
+  tr.addEventListener("click", onClick);
+
+  const tdName = document.createElement("td");
+  tdName.className = "cell-name";
+  tdName.textContent = c.name;
+  const sub = document.createElement("div");
+  sub.className = "cell-sub";
+  sub.textContent = c.membership_plan;
+  tdName.appendChild(sub);
+  tr.appendChild(tdName);
+
+  const tdIndustry = document.createElement("td");
+  tdIndustry.textContent = c.industry;
+  tr.appendChild(tdIndustry);
+
+  const tdContract = document.createElement("td");
+  tdContract.appendChild(badge(statusLabel(CONTRACT_KEYS, c.contract_status), CONTRACT_BADGE[c.contract_status] || "neutral"));
+  tr.appendChild(tdContract);
+
+  const tdRenewal = document.createElement("td");
+  tdRenewal.textContent = formatDate(c.renewal_date, state.lang);
+  tr.appendChild(tdRenewal);
+
+  const tdPayment = document.createElement("td");
+  tdPayment.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), paymentBadgeLevel(c)));
+  tr.appendChild(tdPayment);
+
+  const tdInvoice = document.createElement("td");
+  tdInvoice.appendChild(badge(statusLabel(INVOICE_KEYS, c.invoice_request_status), INVOICE_BADGE[c.invoice_request_status] || "neutral"));
+  tr.appendChild(tdInvoice);
+
+  const tdRisk = document.createElement("td");
+  const pill = document.createElement("span");
+  pill.className = `risk-pill badge-${RISK_BADGE[c.risk.level] || "neutral"}`;
+  pill.textContent = statusLabel(RISK_KEYS, c.risk.level);
+  tdRisk.appendChild(pill);
+  tr.appendChild(tdRisk);
+
+  return tr;
+}
+
 function renderTable(companies, totalCount) {
   const tbody = document.getElementById("companyTableBody");
   tbody.innerHTML = "";
@@ -655,46 +748,7 @@ function renderTable(companies, totalCount) {
   }
 
   companies.forEach((c) => {
-    const tr = document.createElement("tr");
-    tr.addEventListener("click", () => openDrawer(c.id));
-
-    const tdName = document.createElement("td");
-    tdName.className = "cell-name";
-    tdName.textContent = c.name;
-    const sub = document.createElement("div");
-    sub.className = "cell-sub";
-    sub.textContent = c.membership_plan;
-    tdName.appendChild(sub);
-    tr.appendChild(tdName);
-
-    const tdIndustry = document.createElement("td");
-    tdIndustry.textContent = c.industry;
-    tr.appendChild(tdIndustry);
-
-    const tdContract = document.createElement("td");
-    tdContract.appendChild(badge(statusLabel(CONTRACT_KEYS, c.contract_status), CONTRACT_BADGE[c.contract_status] || "neutral"));
-    tr.appendChild(tdContract);
-
-    const tdRenewal = document.createElement("td");
-    tdRenewal.textContent = formatDate(c.renewal_date, state.lang);
-    tr.appendChild(tdRenewal);
-
-    const tdPayment = document.createElement("td");
-    tdPayment.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), PAYMENT_BADGE[c.payment_status] || "neutral"));
-    tr.appendChild(tdPayment);
-
-    const tdInvoice = document.createElement("td");
-    tdInvoice.appendChild(badge(statusLabel(INVOICE_KEYS, c.invoice_request_status), INVOICE_BADGE[c.invoice_request_status] || "neutral"));
-    tr.appendChild(tdInvoice);
-
-    const tdRisk = document.createElement("td");
-    const pill = document.createElement("span");
-    pill.className = `risk-pill badge-${RISK_BADGE[c.risk.level] || "neutral"}`;
-    pill.textContent = statusLabel(RISK_KEYS, c.risk.level);
-    tdRisk.appendChild(pill);
-    tr.appendChild(tdRisk);
-
-    tbody.appendChild(tr);
+    tbody.appendChild(buildCompanyRow(c, () => openDrawer(c.id)));
   });
 
   const { page, pageSize } = state.pagination;
@@ -720,7 +774,47 @@ function renderPager() {
   document.getElementById("pagerControls").classList.toggle("hidden", total === 0);
 }
 
+function sortValue(c, key) {
+  if (key === "risk") return c.risk.score;
+  return c[key];
+}
+
+function applySort(companies) {
+  const { key, dir } = state.sort;
+  if (!key) return companies; // default: already sorted by risk score desc from the API
+  const sign = dir === "asc" ? 1 : -1;
+  return [...companies].sort((a, b) => {
+    const av = sortValue(a, key);
+    const bv = sortValue(b, key);
+    if (av < bv) return -1 * sign;
+    if (av > bv) return 1 * sign;
+    return 0;
+  });
+}
+
+function renderSortArrows() {
+  document.querySelectorAll("#companyTable th.sortable").forEach((th) => {
+    const key = th.getAttribute("data-sort");
+    const arrow = th.querySelector(".sort-arrow");
+    const active = state.sort.key === key;
+    th.classList.toggle("sort-active", active);
+    arrow.textContent = active ? (state.sort.dir === "asc" ? "▲" : "▼") : "▲▼";
+  });
+}
+
+function setSort(key) {
+  if (state.sort.key === key) {
+    state.sort.dir = state.sort.dir === "asc" ? "desc" : "asc";
+  } else {
+    state.sort = { key, dir: "asc" };
+  }
+  state.pagination.page = 1;
+  renderTablePage();
+}
+
 function renderTablePage() {
+  state.companies = applySort(state.companies);
+  renderSortArrows();
   const total = state.companies.length;
   const { page, pageSize } = state.pagination;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -757,11 +851,20 @@ function renderCharts() {
   const toData = (breakdown, keyMap, colorMap) =>
     Object.keys(colorMap)
       .filter((k) => breakdown[k])
-      .map((k) => ({ label: statusLabel(keyMap, k), value: breakdown[k] || 0, color: resolve(colorMap[k]) }));
+      .map((k) => ({ key: k, label: statusLabel(keyMap, k), value: breakdown[k] || 0, color: resolve(colorMap[k]) }));
 
-  Charts.donut(document.getElementById("chartContract"), toData(s.contract_status_breakdown, CONTRACT_KEYS, contractColors), { centerLabel: t("kpiTotal") });
-  Charts.donut(document.getElementById("chartPayment"), toData(s.payment_status_breakdown, PAYMENT_KEYS, paymentColors), { centerLabel: t("kpiTotal") });
-  Charts.donut(document.getElementById("chartInvoice"), toData(s.invoice_status_breakdown, INVOICE_KEYS, invoiceColors), { centerLabel: t("kpiTotal") });
+  Charts.donut(document.getElementById("chartContract"), toData(s.contract_status_breakdown, CONTRACT_KEYS, contractColors), {
+    centerLabel: t("kpiTotal"),
+    onSegmentClick: (d) => openFilteredModal(d.label, (c) => c.contract_status === d.key),
+  });
+  Charts.donut(document.getElementById("chartPayment"), toData(s.payment_status_breakdown, PAYMENT_KEYS, paymentColors), {
+    centerLabel: t("kpiTotal"),
+    onSegmentClick: (d) => openFilteredModal(d.label, (c) => c.payment_status === d.key),
+  });
+  Charts.donut(document.getElementById("chartInvoice"), toData(s.invoice_status_breakdown, INVOICE_KEYS, invoiceColors), {
+    centerLabel: t("kpiTotal"),
+    onSegmentClick: (d) => openFilteredModal(d.label, (c) => c.invoice_request_status === d.key),
+  });
 
   if (state.renewalsByMonth) {
     const critical = resolve("--status-critical");
@@ -948,7 +1051,12 @@ function renderPlanCards(byPlan) {
   wrap.innerHTML = "";
   byPlan.forEach((g) => {
     const card = document.createElement("div");
-    card.className = "plan-card";
+    card.className = "plan-card kpi-clickable";
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    const openThisPlan = () => openFilteredModal(g.key, (c) => c.membership_plan === g.key);
+    card.addEventListener("click", openThisPlan);
+    card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openThisPlan(); } });
 
     const name = document.createElement("div");
     name.className = "plan-name";
@@ -1014,6 +1122,8 @@ function renderIndustryTable(byIndustry) {
     tr.appendChild(tdRisk);
     tr.appendChild(tdLate);
     tr.appendChild(tdNotSent);
+    tr.style.cursor = "pointer";
+    tr.addEventListener("click", () => openFilteredModal(g.key, (c) => c.industry === g.key));
     tbody.appendChild(tr);
   });
 }
@@ -1105,8 +1215,16 @@ function renderDrawer(c) {
   const badges = document.createElement("div");
   badges.className = "drawer-badges";
   badges.appendChild(badge(statusLabel(CONTRACT_KEYS, c.contract_status), CONTRACT_BADGE[c.contract_status] || "neutral"));
-  badges.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), PAYMENT_BADGE[c.payment_status] || "neutral"));
+  badges.appendChild(badge(statusLabel(PAYMENT_KEYS, c.payment_status), paymentBadgeLevel(c)));
   badges.appendChild(badge(statusLabel(INVOICE_KEYS, c.invoice_request_status), INVOICE_BADGE[c.invoice_request_status] || "neutral"));
+  if (c.invoice_request_status === "Not Sent") {
+    const sendInvoiceBtn = document.createElement("button");
+    sendInvoiceBtn.className = "btn-primary send-invoice-btn";
+    sendInvoiceBtn.type = "button";
+    sendInvoiceBtn.textContent = t("sendInvoice");
+    sendInvoiceBtn.addEventListener("click", () => sendInvoiceNow(c.id));
+    badges.appendChild(sendInvoiceBtn);
+  }
   content.appendChild(badges);
 
   const aiCard = document.createElement("div");
@@ -1139,6 +1257,7 @@ function renderDrawer(c) {
     ["colRenewal", formatDate(c.renewal_date, state.lang)],
     ["drawerInvoiceSent", formatDate(c.invoice_sent_date, state.lang)],
     ["drawerLastPayment", formatDate(c.last_payment_date, state.lang)],
+    ["drawerPaymentDue", formatDate(c.next_payment_due, state.lang)],
   ];
   items.forEach(([labelKey, val]) => {
     const item = document.createElement("div");
@@ -1288,6 +1407,18 @@ async function saveStatus(id) {
   }
 }
 
+async function sendInvoiceNow(id) {
+  try {
+    const updated = await api(`/api/companies/${id}/status`, { method: "PATCH", body: JSON.stringify({ invoice_request_status: "Sent" }) });
+    toast(t("invoiceSent"));
+    renderDrawer(updated);
+    loadBrief(updated);
+    await Promise.all([loadTable(), loadDashboardData()]);
+  } catch (e) {
+    toast(e.detail || t("fetchError"));
+  }
+}
+
 async function deleteRecord(id, name) {
   const msg = state.lang === "ja" ? `${name} を削除しますか？この操作は取り消せません。` : `Delete ${name}? This cannot be undone.`;
   if (!window.confirm(msg)) return;
@@ -1319,6 +1450,7 @@ function openRecordModal(mode, company) {
   document.getElementById("fContractStart").value = c.contract_start_date || "";
   document.getElementById("fRenewalDate").value = c.renewal_date || "";
   document.getElementById("fPaymentStatus").value = c.payment_status === "Late Payment" ? "Not Paid" : (c.payment_status || "Not Paid");
+  document.getElementById("fPaymentDue").value = c.next_payment_due || isoDatePlusDays(30);
   document.getElementById("fInvoiceStatus").value = c.invoice_request_status || "Not Sent";
   document.getElementById("fFee").value = c.monthly_fee_jpy != null ? c.monthly_fee_jpy : "";
   document.getElementById("fNotes").value = c.notes || "";
@@ -1383,6 +1515,69 @@ function closeHelpModal() {
   modal.setAttribute("aria-hidden", "true");
 }
 
+/* ---------------------------- KPI drill-down modal ---------------------------- */
+const KPI_FILTERS = {
+  total: (c) => true,
+  active: (c) => c.contract_status === "Active",
+  renewals: (c) => c.contract_status === "Active" && c.risk.days_to_renewal !== null && c.risk.days_to_renewal >= 0 && c.risk.days_to_renewal <= 30,
+  overdue: (c) => c.effective_payment_status === "Late Payment",
+  missing: (c) => c.invoice_request_status === "Not Sent",
+};
+const KPI_TITLE_KEYS = { total: "kpiTotal", active: "kpiActive", renewals: "kpiRenewals", overdue: "kpiOverdue", missing: "kpiMissing" };
+
+async function openKpiModal(kind) {
+  const filterFn = KPI_FILTERS[kind];
+  if (!filterFn) return;
+  const sortFn = kind === "renewals" ? (a, b) => a.risk.days_to_renewal - b.risk.days_to_renewal : null;
+  return openFilteredModal(t(KPI_TITLE_KEYS[kind] || ""), filterFn, sortFn);
+}
+
+// Generic drill-down used by the KPI tiles, donut chart segments, and the
+// membership-plan / industry segmentation panels -- anywhere a summary
+// number or group should be clickable to see exactly which companies make it up.
+async function openFilteredModal(title, filterFn, sortFn) {
+  const backdrop = document.getElementById("kpiModalBackdrop");
+  const modal = document.getElementById("kpiModal");
+  document.getElementById("kpiModalTitle").textContent = title;
+  const tbody = document.getElementById("kpiModalTableBody");
+  const empty = document.getElementById("kpiModalEmpty");
+  tbody.innerHTML = "";
+  empty.classList.add("hidden");
+  document.getElementById("kpiModalSub").textContent = "";
+
+  backdrop.classList.remove("hidden");
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+
+  try {
+    const all = await api("/api/companies");
+    let matches = all.filter(filterFn);
+    if (sortFn) matches = matches.sort(sortFn);
+
+    document.getElementById("kpiModalSub").textContent = state.lang === "ja"
+      ? `${matches.length}社`
+      : `${matches.length} ${matches.length === 1 ? "company" : "companies"}`;
+
+    if (!matches.length) {
+      empty.textContent = t("noResults");
+      empty.classList.remove("hidden");
+    } else {
+      matches.forEach((c) => {
+        tbody.appendChild(buildCompanyRow(c, () => { closeKpiModal(); openDrawer(c.id); }));
+      });
+    }
+  } catch (e) {
+    toast(t("fetchError"));
+  }
+}
+
+function closeKpiModal() {
+  document.getElementById("kpiModalBackdrop").classList.add("hidden");
+  const modal = document.getElementById("kpiModal");
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
 async function submitRecordModal(e) {
   e.preventDefault();
   const form = document.getElementById("recordForm");
@@ -1401,6 +1596,7 @@ async function submitRecordModal(e) {
     contract_start_date: document.getElementById("fContractStart").value,
     renewal_date: document.getElementById("fRenewalDate").value,
     payment_status: document.getElementById("fPaymentStatus").value,
+    next_payment_due: document.getElementById("fPaymentDue").value,
     monthly_fee_jpy: parseInt(document.getElementById("fFee").value, 10) || 0,
     invoice_request_status: document.getElementById("fInvoiceStatus").value,
     notes: document.getElementById("fNotes").value.trim() || null,
@@ -1458,7 +1654,7 @@ async function loadBrief(c) {
     if (sourceEl) sourceEl.textContent = brief.source === "ai" ? t("aiSourceAi") : t("aiSourceFallback");
 
     const emailEl = document.getElementById("emailScriptText");
-    if (emailEl && !emailEl.value) emailEl.value = brief.call_script;
+    if (emailEl && !emailEl.value) emailEl.value = brief.email_body;
   } catch (e) {
     stopLoader("brief");
     const scriptEl = document.getElementById("aiScriptText");
@@ -1704,6 +1900,21 @@ function initEvents() {
   });
 
   document.getElementById("resetBtn").addEventListener("click", resetFilters);
+
+  document.querySelectorAll(".kpi-clickable").forEach((tile) => {
+    const kind = tile.getAttribute("data-kpi");
+    tile.addEventListener("click", () => openKpiModal(kind));
+    tile.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openKpiModal(kind); }
+    });
+  });
+  document.getElementById("kpiModalClose").addEventListener("click", closeKpiModal);
+  document.getElementById("kpiModalBackdrop").addEventListener("click", closeKpiModal);
+
+  document.querySelectorAll("#companyTable th.sortable").forEach((th) => {
+    th.addEventListener("click", () => setSort(th.getAttribute("data-sort")));
+  });
+
   document.getElementById("askAiSubmit").addEventListener("click", submitAskAi);
   document.getElementById("askAiInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") submitAskAi();
@@ -1746,7 +1957,7 @@ function initEvents() {
   document.getElementById("helpModalBackdrop").addEventListener("click", closeHelpModal);
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { closeDrawer(); closeRecordModal(); closeHelpModal(); }
+    if (e.key === "Escape") { closeDrawer(); closeRecordModal(); closeHelpModal(); closeKpiModal(); }
   });
 }
 

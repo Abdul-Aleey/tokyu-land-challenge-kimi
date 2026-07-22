@@ -34,6 +34,16 @@ _COUNT_KEYWORDS = ("how many", "count", "number of", "何社", "いくつ")
 
 _EMPTY_FILTERS = {"search": "", "contract_status": "", "payment_status": "", "invoice_status": ""}
 
+# Questions about the dashboard itself, not its data -- the rule-based fallback
+# can't explain features the way Gemini can, so it just points staff to the
+# in-app user guide instead of misreading "how do I add a company" as a
+# company-name search.
+_META_WORDS = (
+    "this dashboard", "this app", "what is this", "how do i", "how to use",
+    "user guide", "help me", "what does this do",
+    "このダッシュボード", "使い方", "使用方法", "どうやって", "ヘルプ",
+)
+
 
 def _is_short_query(term: str) -> bool:
     """CJK text has no whitespace between words, so a word-count check always
@@ -55,6 +65,13 @@ def _match_keyword(q: str):
 
 def _fallback(question: str, companies: list[dict], lang: str) -> dict:
     q = question.lower()
+
+    if any(w in q for w in _META_WORDS):
+        if lang == "ja":
+            answer = "このダッシュボードは、会員企業の契約・支払い・請求書ステータスをすぐに確認できるサクラ ディープテック渋谷の管理画面です。詳しい使い方は、右上の「？」ヘルプボタンからご覧いただけます。"
+        else:
+            answer = "This is the Sakura Deeptech Shibuya member status console, for quickly checking a member company's contract, payment, and invoice status. See the \"?\" Help button in the top right for a full guide to every feature."
+        return {"answer": answer, **_EMPTY_FILTERS}
 
     # 1) "which company is riskiest" -- a genuine analytical answer, not just a filter.
     # Matched by co-occurrence (a risk word + a superlative/comparative word) rather than an
@@ -147,7 +164,8 @@ def answer_question(question: str, companies: list[dict], lang: str = "en", hist
                 "membership_plan": c["membership_plan"],
                 "contract_status": c["contract_status"],
                 "renewal_date": c["renewal_date"],
-                "payment_status": c["payment_status"],
+                "next_payment_due": c["next_payment_due"],
+                "payment_status": c["effective_payment_status"],
                 "invoice_status": c["invoice_request_status"],
                 "monthly_fee_jpy": c["monthly_fee_jpy"],
                 "risk_level": c["risk"]["level"],

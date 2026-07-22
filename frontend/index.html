@@ -43,23 +43,23 @@
 <main class="shell">
 
   <section class="kpi-row" id="kpiRow" aria-label="Key metrics">
-    <div class="kpi-tile" data-kpi="total">
+    <div class="kpi-tile kpi-clickable" data-kpi="total" role="button" tabindex="0">
       <span class="kpi-label" data-i18n="kpiTotal">Total Members</span>
       <span class="kpi-value" id="kpiTotal">—</span>
     </div>
-    <div class="kpi-tile" data-kpi="active">
+    <div class="kpi-tile kpi-clickable" data-kpi="active" role="button" tabindex="0">
       <span class="kpi-label" data-i18n="kpiActive">Active Contracts</span>
       <span class="kpi-value" id="kpiActive">—</span>
     </div>
-    <div class="kpi-tile accent-warning" data-kpi="renewals">
+    <div class="kpi-tile accent-warning kpi-clickable" data-kpi="renewals" role="button" tabindex="0">
       <span class="kpi-label" data-i18n="kpiRenewals">Renewals Due (30d)</span>
       <span class="kpi-value" id="kpiRenewals">—</span>
     </div>
-    <div class="kpi-tile accent-critical" data-kpi="overdue">
+    <div class="kpi-tile accent-critical kpi-clickable" data-kpi="overdue" role="button" tabindex="0">
       <span class="kpi-label" data-i18n="kpiOverdue">Late Payments</span>
       <span class="kpi-value" id="kpiOverdue">—</span>
     </div>
-    <div class="kpi-tile accent-serious" data-kpi="missing">
+    <div class="kpi-tile accent-serious kpi-clickable" data-kpi="missing" role="button" tabindex="0">
       <span class="kpi-label" data-i18n="kpiMissing">Invoices Not Sent</span>
       <span class="kpi-value" id="kpiMissing">—</span>
     </div>
@@ -124,13 +124,13 @@
       <table class="company-table" id="companyTable">
         <thead>
           <tr>
-            <th data-i18n="colCompany">Company</th>
-            <th data-i18n="colIndustry">Industry</th>
-            <th data-i18n="colContract">Contract</th>
-            <th data-i18n="colRenewal">Renewal Date</th>
-            <th data-i18n="colPayment">Payment</th>
-            <th data-i18n="colInvoice">Invoice Request</th>
-            <th data-i18n="colRisk">Risk</th>
+            <th class="sortable" data-sort="name"><span data-i18n="colCompany">Company</span><span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="industry"><span data-i18n="colIndustry">Industry</span><span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="contract_status"><span data-i18n="colContract">Contract</span><span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="renewal_date"><span data-i18n="colRenewal">Renewal Date</span><span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="payment_status"><span data-i18n="colPayment">Payment</span><span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="invoice_request_status"><span data-i18n="colInvoice">Invoice Request</span><span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="risk"><span data-i18n="colRisk">Risk</span><span class="sort-arrow"></span></th>
           </tr>
         </thead>
         <tbody id="companyTableBody"></tbody>
@@ -289,6 +289,10 @@
         <select id="fPaymentStatus"></select>
       </label>
       <label>
+        <span data-i18n="formPaymentDue">Next payment due date</span>
+        <input type="date" id="fPaymentDue" required>
+      </label>
+      <label>
         <span data-i18n="formFee">Monthly fee (JPY)</span>
         <input type="number" id="fFee" min="0" required>
       </label>
@@ -312,6 +316,30 @@
     <div id="helpModalBody"></div>
   </div>
 </aside>
+
+<div class="drawer-backdrop hidden" id="kpiModalBackdrop"></div>
+<div class="center-modal hidden" id="kpiModal" aria-hidden="true">
+  <button class="drawer-close" id="kpiModalClose" aria-label="Close">✕</button>
+  <div class="drawer-title" id="kpiModalTitle"></div>
+  <div class="center-modal-sub" id="kpiModalSub"></div>
+  <div class="table-scroll">
+    <table class="company-table" id="kpiModalTable">
+      <thead>
+        <tr>
+          <th data-i18n="colCompany">Company</th>
+          <th data-i18n="colIndustry">Industry</th>
+          <th data-i18n="colContract">Contract</th>
+          <th data-i18n="colRenewal">Renewal Date</th>
+          <th data-i18n="colPayment">Payment</th>
+          <th data-i18n="colInvoice">Invoice Request</th>
+          <th data-i18n="colRisk">Risk</th>
+        </tr>
+      </thead>
+      <tbody id="kpiModalTableBody"></tbody>
+    </table>
+  </div>
+  <div class="table-empty hidden" id="kpiModalEmpty"></div>
+</div>
 
 <script src="/static/js/charts.js"></script>
 <script src="/static/js/app.js"></script>

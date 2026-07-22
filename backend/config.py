@@ -15,10 +15,18 @@ class GeminiNotConfiguredError(Exception):
     """Raised when a Gemini call is attempted without a GCP project configured."""
 
 
+# .env.example ships this literal string as a placeholder -- if it's never been
+# replaced with a real project ID, treat it exactly like "not configured" so
+# the app fails fast (no GCP project exists to call) instead of attempting a
+# real network request that can only ever fail, slowly, after a long timeout.
+_PLACEHOLDER_PROJECT_IDS = {"your-gcp-project-id"}
+
+
 class Settings:
     def __init__(self) -> None:
         self.use_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "true").strip().lower() == "true"
-        self.gcp_project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+        raw_project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+        self.gcp_project = "" if raw_project in _PLACEHOLDER_PROJECT_IDS else raw_project
         self.gcp_location = os.getenv("GOOGLE_CLOUD_LOCATION", "asia-northeast1")
         self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
         self.demo_mode = os.getenv("DEMO_MODE", "false").strip().lower() == "true"

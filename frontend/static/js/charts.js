@@ -98,6 +98,7 @@ const Charts = (() => {
         showTooltip(tip, container, e.offsetX, e.offsetY, ttRow(`${d.label} (${pct}%)`, d.value));
       });
       p.addEventListener("pointerleave", () => { p.style.opacity = "1"; hideTooltip(tip); });
+      if (opts.onSegmentClick) p.addEventListener("click", () => opts.onSegmentClick(d));
       svg.appendChild(p);
       segments.push(d);
     });
@@ -127,6 +128,10 @@ const Charts = (() => {
       item.appendChild(dot);
       item.appendChild(label);
       item.appendChild(val);
+      if (opts.onSegmentClick) {
+        item.style.cursor = "pointer";
+        item.addEventListener("click", () => opts.onSegmentClick(d));
+      }
       legend.appendChild(item);
     });
     container.appendChild(legend);

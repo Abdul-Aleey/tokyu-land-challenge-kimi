@@ -27,7 +27,8 @@ def _all_companies_with_risk() -> list[dict]:
 def summary():
     companies = _all_companies_with_risk()
     contract_ct = Counter(c["contract_status"] for c in companies)
-    payment_ct = Counter(c["payment_status"] for c in companies)
+    payment_ct = Counter(c["payment_status"] for c in companies)  # raw Paid/Not Paid, for the payment donut
+    effective_ct = Counter(c["effective_payment_status"] for c in companies)  # includes Late Payment, for the KPI
     invoice_ct = Counter(c["invoice_request_status"] for c in companies)
 
     renewals_due_30d = sum(
@@ -43,7 +44,7 @@ def summary():
         total_companies=len(companies),
         active_contracts=contract_ct.get("Active", 0),
         renewals_due_30d=renewals_due_30d,
-        payments_late=payment_ct.get("Late Payment", 0),
+        payments_late=effective_ct.get("Late Payment", 0),
         payments_not_paid=payment_ct.get("Not Paid", 0),
         invoices_not_sent=invoice_ct.get("Not Sent", 0),
         at_risk_count=at_risk,
@@ -83,7 +84,11 @@ def risk_radar(limit: int = 8):
     at_risk = [c for c in companies if c["risk"]["level"] in ("High", "Critical")]
     at_risk.sort(key=lambda c: c["risk"]["score"], reverse=True)
     return [
-        RiskRadarItem(id=c["id"], name=c["name"], industry=c["industry"], risk=c["risk"])
+        RiskRadarItem(
+            id=c["id"], name=c["name"], industry=c["industry"],
+            payment_status=c["payment_status"], renewal_date=c["renewal_date"],
+            next_payment_due=c["next_payment_due"], risk=c["risk"],
+        )
         for c in at_risk[:limit]
     ]
 
@@ -104,7 +109,7 @@ def _segment_buckets(companies: list[dict], key_fn) -> list[dict]:
             g["active"] += 1
         elif c["contract_status"] == "Expired":
             g["expired"] += 1
-        if c["payment_status"] == "Late Payment":
+        if c["effective_payment_status"] == "Late Payment":
             g["payments_late"] += 1
         if c["invoice_request_status"] == "Not Sent":
             g["invoices_not_sent"] += 1
