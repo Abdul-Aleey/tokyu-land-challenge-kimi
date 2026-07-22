@@ -323,14 +323,14 @@
     <table class="company-table" id="kpiModalTable">
       <thead>
         <tr>
-          <th data-i18n="colCompany">Company</th>
-          <th data-i18n="colIndustry">Industry</th>
-          <th data-i18n="colContract">Contract</th>
-          <th data-i18n="colRenewal">Renewal Date</th>
-          <th data-i18n="colPayment">Payment</th>
-          <th data-i18n="colPaymentDue">Payment Date</th>
-          <th data-i18n="colInvoice">Invoice Request</th>
-          <th data-i18n="colRisk">Risk</th>
+          <th class="sortable" data-sort="name"><span data-i18n="colCompany">Company</span><span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="industry"><span data-i18n="colIndustry">Industry</span><span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="contract_status"><span data-i18n="colContract">Contract</span><span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="renewal_date"><span data-i18n="colRenewal">Renewal Date</span><span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="payment_status"><span data-i18n="colPayment">Payment</span><span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="last_payment_date"><span data-i18n="colPaymentDue">Payment Date</span><span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="invoice_request_status"><span data-i18n="colInvoice">Invoice Request</span><span class="sort-arrow"></span></th>
+          <th class="sortable" data-sort="risk"><span data-i18n="colRisk">Risk</span><span class="sort-arrow"></span></th>
         </tr>
       </thead>
       <tbody id="kpiModalTableBody"></tbody>

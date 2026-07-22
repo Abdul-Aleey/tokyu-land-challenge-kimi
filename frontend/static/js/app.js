@@ -434,6 +434,7 @@ const state = {
   filters: { search: "", contract_status: "", payment_status: "", invoice_status: "" },
   pagination: { page: 1, pageSize: 25 },
   sort: { key: null, dir: "asc" },
+  kpiModal: { matches: [], sort: { key: null, dir: "asc" } },
   summary: null,
   renewalsByMonth: null,
   insightCache: {},
@@ -781,8 +782,8 @@ function sortValue(c, key) {
   return c[key];
 }
 
-function applySort(companies) {
-  const { key, dir } = state.sort;
+function applySort(companies, sortState = state.sort) {
+  const { key, dir } = sortState;
   if (!key) return companies; // default: already sorted by risk score desc from the API
   const sign = dir === "asc" ? 1 : -1;
   return [...companies].sort((a, b) => {
@@ -794,13 +795,13 @@ function applySort(companies) {
   });
 }
 
-function renderSortArrows() {
-  document.querySelectorAll("#companyTable th.sortable").forEach((th) => {
+function renderSortArrows(tableSelector = "#companyTable", sortState = state.sort) {
+  document.querySelectorAll(`${tableSelector} th.sortable`).forEach((th) => {
     const key = th.getAttribute("data-sort");
     const arrow = th.querySelector(".sort-arrow");
-    const active = state.sort.key === key;
+    const active = sortState.key === key;
     th.classList.toggle("sort-active", active);
-    arrow.textContent = active ? (state.sort.dir === "asc" ? "▲" : "▼") : "▲▼";
+    arrow.textContent = active ? (sortState.dir === "asc" ? "▲" : "▼") : "▲▼";
   });
 }
 
@@ -1551,26 +1552,51 @@ async function openFilteredModal(title, filterFn, sortFn) {
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
 
+  // A caller-provided sortFn (e.g. soonest renewal first) is the initial
+  // order; clicking a column header then takes over via state.kpiModal.sort.
+  state.kpiModal.sort = { key: null, dir: "asc" };
+
   try {
     const all = await api("/api/companies");
     let matches = all.filter(filterFn);
     if (sortFn) matches = matches.sort(sortFn);
-
-    document.getElementById("kpiModalSub").textContent = state.lang === "ja"
-      ? `${matches.length}社`
-      : `${matches.length} ${matches.length === 1 ? "company" : "companies"}`;
-
-    if (!matches.length) {
-      empty.textContent = t("noResults");
-      empty.classList.remove("hidden");
-    } else {
-      matches.forEach((c) => {
-        tbody.appendChild(buildCompanyRow(c, () => { closeKpiModal(); openDrawer(c.id); }));
-      });
-    }
+    state.kpiModal.matches = matches;
+    renderKpiModalRows();
   } catch (e) {
     toast(t("fetchError"));
   }
+}
+
+function renderKpiModalRows() {
+  const tbody = document.getElementById("kpiModalTableBody");
+  const empty = document.getElementById("kpiModalEmpty");
+  const matches = applySort(state.kpiModal.matches, state.kpiModal.sort);
+
+  document.getElementById("kpiModalSub").textContent = state.lang === "ja"
+    ? `${matches.length}社`
+    : `${matches.length} ${matches.length === 1 ? "company" : "companies"}`;
+
+  tbody.innerHTML = "";
+  if (!matches.length) {
+    empty.textContent = t("noResults");
+    empty.classList.remove("hidden");
+  } else {
+    empty.classList.add("hidden");
+    matches.forEach((c) => {
+      tbody.appendChild(buildCompanyRow(c, () => { closeKpiModal(); openDrawer(c.id); }));
+    });
+  }
+  renderSortArrows("#kpiModalTable", state.kpiModal.sort);
+}
+
+function setKpiModalSort(key) {
+  const s = state.kpiModal.sort;
+  if (s.key === key) {
+    s.dir = s.dir === "asc" ? "desc" : "asc";
+  } else {
+    state.kpiModal.sort = { key, dir: "asc" };
+  }
+  renderKpiModalRows();
 }
 
 function closeKpiModal() {
@@ -1915,6 +1941,9 @@ function initEvents() {
 
   document.querySelectorAll("#companyTable th.sortable").forEach((th) => {
     th.addEventListener("click", () => setSort(th.getAttribute("data-sort")));
+  });
+  document.querySelectorAll("#kpiModalTable th.sortable").forEach((th) => {
+    th.addEventListener("click", () => setKpiModalSort(th.getAttribute("data-sort")));
   });
 
   document.getElementById("askAiSubmit").addEventListener("click", submitAskAi);
